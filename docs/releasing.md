@@ -24,7 +24,7 @@ Do not treat a cross-compile or an unexecuted test as a native pass. If a genuin
 
 ## Release proposal and approval
 
-After CI passes, prepare a complete proposal using the reviewed [notes](releases/v0.1.0.md), exact source commit, title, asset names and checksums, final install/update commands and known limitations. Obtain explicit release approval. A draft release is still a GitHub-side release action and must not be created merely to request review.
+After CI passes, prepare a complete proposal using the reviewed [notes](releases/v0.1.0.md), exact source commit and CI run ID, title, asset names and checksums, final install/update commands and known limitations. Assemble the native candidates with `scripts/assemble.py` and record the SHA-256 of the resulting `SHA256SUMS` file itself. That digest binds approval to every reviewed asset. Obtain explicit release approval. A draft release is still a GitHub-side release action and must not be created merely to request review.
 
 Expected v0.1.0 assets:
 
@@ -43,10 +43,10 @@ No independent signing certificate/key is configured. Describe SHA-256 integrity
 
 ## Publish the approved release
 
-The manual **Approved release** workflow requires the exact commit SHA and `publish-v0.1.0`. Its first job requires a successful `CI` run on `main` at that commit. The protected environment is a second human gate.
+Dispatch the manual **Approved release** workflow from `main` with four reviewed inputs: `source_commit`, `ci_run_id`, `manifest_sha256`, and `approval` set to `publish-v0.1.0`. Its first job verifies that the selected run is the repository's `CI` workflow, succeeded on `main`, and tested the approved commit. The protected `release` environment requires maintainer review.
 
-The workflow downloads immutable CI artifacts, checks every manifest and common file, requires the expected target/version/commit in each build record, and assembles the exact assets. It does not rebuild untested binaries. `gh release create` creates the approved tag/release only at this stage. Ordinary pushes, pull requests and tag pushes do not trigger this workflow.
+The workflow downloads artifacts from that exact run, checks every manifest and common file, requires the expected target/version/commit in each build record, and verifies the assembled manifest against the approved digest before copying any release payload. A rerun that changes artifact bytes cannot silently replace reviewed assets. It does not rebuild binaries. `gh release create` creates the approved tag/release only at this stage. Ordinary pushes, pull requests and tag pushes do not trigger this workflow.
 
 After release publication, the workflow downloads all released assets and verifies their bytes. Three standard native runners then exercise the published binary and actual HTTPS installer download/update/uninstall path in temporary fixtures. Require those jobs to succeed, confirm public repository/release accessibility and update README pre-release wording. Real tunnel/account validation is separate and must never use undisclosed credentials or private machines as an implicit test target.
 
-If artifact retention expires (14 days), rerun CI at the approved source commit before release. If the public-facing version, notes, title or asset names materially change after approval, present the revised proposal before publishing it.
+If artifact retention expires (14 days), rerun CI at the approved source commit, reassemble and recheck the assets, and refresh the run ID and manifest digest in the proposal before approval. If an approved proposal's artifact bytes, version, notes, title or asset names materially change, present the revised proposal before publishing it.

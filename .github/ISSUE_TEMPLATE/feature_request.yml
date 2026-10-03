@@ -1,0 +1,27 @@
+name: Feature request
+description: Suggest an improvement to Mafsil or its documentation.
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: Search existing requests first. Describe a concrete workflow and use placeholder data rather than private project information.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Explain the task you cannot complete, or the friction in your current workflow.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+      description: Describe the result you would like and which platforms or MCP clients it affects.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives or additional context
+      description: Optional. Mention workarounds you have considered and relevant examples.

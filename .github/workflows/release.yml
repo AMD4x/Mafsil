@@ -8,6 +8,14 @@ on:
         description: Exact 40-character commit approved for release
         required: true
         type: string
+      ci_run_id:
+        description: Exact successful CI run whose artifacts were reviewed
+        required: true
+        type: string
+      manifest_sha256:
+        description: SHA-256 of the assembled SHA256SUMS file in the approved proposal
+        required: true
+        type: string
       approval:
         description: Type publish-v0.1.0 only after the release proposal is approved
         required: true
@@ -24,33 +32,39 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-24.04
-    outputs:
-      run_id: ${{ steps.ci.outputs.run_id }}
+    timeout-minutes: 5
     steps:
       - name: Validate approval and source
         env:
           SOURCE: ${{ inputs.source_commit }}
           APPROVAL: ${{ inputs.approval }}
+          CI_RUN: ${{ inputs.ci_run_id }}
+          MANIFEST: ${{ inputs.manifest_sha256 }}
+          WORKFLOW_REF: ${{ github.ref }}
         run: |
           python - <<'PY'
           import os, re
           assert re.fullmatch(r'[a-f0-9]{40}', os.environ['SOURCE']), 'Exact commit SHA required'
+          assert re.fullmatch(r'[1-9][0-9]*', os.environ['CI_RUN']), 'Exact CI run ID required'
+          assert re.fullmatch(r'[a-f0-9]{64}', os.environ['MANIFEST']), 'Approved manifest SHA-256 required'
+          assert os.environ['WORKFLOW_REF'] == 'refs/heads/main', 'Release must be dispatched from main'
           assert os.environ['APPROVAL'] == 'publish-v0.1.0', 'Release approval text differs'
           PY
-      - name: Require successful CI for the approved commit
-        id: ci
+      - name: Require the reviewed CI run for the approved commit
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE: ${{ inputs.source_commit }}
+          CI_RUN: ${{ inputs.ci_run_id }}
         run: |
-          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$SOURCE&status=success&per_page=20" > "$RUNNER_TEMP/ci-runs.json"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$CI_RUN" > "$RUNNER_TEMP/ci-run.json"
           python - <<'PY'
           import json, os, pathlib
-          runs = json.loads((pathlib.Path(os.environ['RUNNER_TEMP']) / 'ci-runs.json').read_text())['workflow_runs']
-          runs = [r for r in runs if r['head_sha'] == os.environ['SOURCE'] and r['head_branch'] == 'main' and r['event'] in ('push', 'workflow_dispatch') and r['conclusion'] == 'success']
-          assert runs, 'No successful main-branch CI run for this exact commit'
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
-              f.write('run_id=' + str(runs[0]['id']) + '\n')
+          run = json.loads((pathlib.Path(os.environ['RUNNER_TEMP']) / 'ci-run.json').read_text())
+          assert run['id'] == int(os.environ['CI_RUN']), 'CI run differs from approval'
+          assert run['path'] == '.github/workflows/ci.yml', 'Unexpected CI workflow'
+          assert run['head_sha'] == os.environ['SOURCE'] and run['head_branch'] == 'main', 'CI source differs from approval'
+          assert run['event'] in ('push', 'workflow_dispatch'), 'Unexpected CI event'
+          assert run['status'] == 'completed' and run['conclusion'] == 'success', 'Reviewed CI run has not succeeded'
           PY
 
   publish:
@@ -70,15 +84,16 @@ jobs:
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           github-token: ${{ github.token }}
-          run-id: ${{ needs.verify.outputs.run_id }}
+          run-id: ${{ inputs.ci_run_id }}
           pattern: candidate-*
           path: ${{ runner.temp }}/candidates
       - name: Verify native artifacts and build provenance
         env:
           SOURCE: ${{ inputs.source_commit }}
+          MANIFEST: ${{ inputs.manifest_sha256 }}
         run: |
           test "$(cat VERSION)" = '0.1.0'
-          python scripts/assemble.py --input "$RUNNER_TEMP/candidates" --output "$RUNNER_TEMP/release" --commit "$SOURCE" --version v0.1.0
+          python scripts/assemble.py --input "$RUNNER_TEMP/candidates" --output "$RUNNER_TEMP/release" --commit "$SOURCE" --version v0.1.0 --expected-manifest-sha256 "$MANIFEST"
       - name: Publish exactly the approved release
         env:
           GH_TOKEN: ${{ github.token }}

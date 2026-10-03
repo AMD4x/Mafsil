@@ -20,9 +20,12 @@ def main():
     parser.add_argument("--output", type=pathlib.Path, required=True)
     parser.add_argument("--commit", required=True)
     parser.add_argument("--version", required=True)
+    parser.add_argument("--expected-manifest-sha256", help="Bind publication to the SHA256SUMS file reviewed by the maintainer")
     args = parser.parse_args()
     if not re.fullmatch(r"[a-f0-9]{40}", args.commit) or not re.fullmatch(r"v\d+\.\d+\.\d+", args.version):
         parser.error("exact commit SHA and version are required")
+    if args.expected_manifest_sha256 is not None and not re.fullmatch(r"[a-f0-9]{64}", args.expected_manifest_sha256):
+        parser.error("expected manifest SHA-256 must be 64 lowercase hexadecimal characters")
     args.output.mkdir(parents=True, exist_ok=True)
     if any(args.output.iterdir()):
         parser.error("output must be empty")
@@ -50,9 +53,13 @@ def main():
         build = json.loads((folder / info).read_text(encoding="utf-8"))
         if build["commit"] != args.commit or build["version"] != args.version or build["target"] != target.replace("_", "/"):
             raise SystemExit(f"Candidate provenance differs from approved commit/version: {target}")
+    manifest_text = "".join(f"{collected[name][0]}  {name}\n" for name in sorted(collected))
+    manifest_digest = hashlib.sha256(manifest_text.encode("ascii")).hexdigest()
+    if args.expected_manifest_sha256 is not None and manifest_digest != args.expected_manifest_sha256:
+        raise SystemExit("Assembled manifest differs from the approved release proposal")
     for name, (_, source) in collected.items():
         shutil.copy2(source, args.output / name)
-    (args.output / "SHA256SUMS").write_text("".join(f"{collected[name][0]}  {name}\n" for name in sorted(collected)), encoding="ascii", newline="\n")
+    (args.output / "SHA256SUMS").write_text(manifest_text, encoding="ascii", newline="\n")
     print(f"Verified {len(collected)} assets from commit {args.commit}")
 
 if __name__ == "__main__":

@@ -1,0 +1,31 @@
+name: Setup or usage help
+description: Get help with installation, MCP connections, configuration or tools.
+title: "[Help]: "
+labels: [question]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Start with the [installation guide](https://github.com/AMD4x/Mafsil/blob/main/docs/installation.md) and [configuration guide](https://github.com/AMD4x/Mafsil/blob/main/docs/configuration.md).
+        Issues are public. Remove tokens, private paths and personal data before sharing output or configuration.
+  - type: textarea
+    id: goal
+    attributes:
+      label: What are you trying to do?
+      description: Describe your goal and where you are stuck.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Version and environment
+      description: Mafsil version or source commit, OS/architecture, MCP client, and shell if relevant.
+    validations:
+      required: true
+  - type: textarea
+    id: attempts
+    attributes:
+      label: What have you tried?
+      description: Include relevant commands, tool names and sanitized errors. For configuration issues, share only the relevant fields with placeholder paths.
+    validations:
+      required: true

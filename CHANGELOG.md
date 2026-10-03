@@ -9,4 +9,6 @@
 - Modern and legacy MCP compatibility through the official Go SDK.
 - Per-user terminal installers, verified raw binaries, update rollback and conservative uninstall.
 - Original light/dark identity, editable vector assets and Windows executable resources.
-- Native CI targets for Windows amd64, Linux amd64 and Linux arm64; publication remains pending.
+- Native Windows amd64, Linux amd64 and Linux arm64 CI with race checks, security scans, packaged binary tests and installer fixtures.
+- Structured bug, setup-help and feature-request forms, with a separate private security reporting channel.
+- Exact-source, exact-artifact release approval; the first release remains pending.

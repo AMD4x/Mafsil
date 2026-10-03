@@ -1,7 +1,16 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/brand/logo-dark.svg">
-  <img src="assets/brand/logo-light.svg" alt="Mafsil" width="768">
-</picture>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/brand/logo-dark.svg">
+    <img src="assets/brand/logo-light.svg" alt="Mafsil" width="768">
+  </picture>
+</p>
+
+<p align="center">
+  <strong>Your workspace. Connected.</strong><br>
+  <a href="#get-started">Get started</a> ·
+  <a href="docs/tools.md">Tools</a> ·
+  <a href="https://github.com/AMD4x/Mafsil/issues/new/choose">Report a problem</a>
+</p>
 
 Mafsil connects an MCP-compatible agent to a workspace on Windows or Linux. Read files, make precise conditional edits, run commands, and work with interactive terminals through a small set of composable tools.
 
@@ -125,6 +134,12 @@ File tools use Go's traversal-resistant `os.Root`, reject links/reparse points a
 Command children receive an allowlisted environment with dedicated temporary paths. Windows processes join a kill-on-close Job Object before execution. Linux uses process groups; deliberate daemonization or privilege changes can escape that lifecycle mechanism. Screen snapshots are an approximation; raw VT output is also available.
 
 Read the [threat model](docs/security.md) before enabling execution. Report vulnerabilities using [SECURITY.md](SECURITY.md).
+
+## Help and feedback
+
+[Report a bug, ask for help or suggest an improvement](https://github.com/AMD4x/Mafsil/issues/new/choose). The forms help you include your Mafsil version, platform and a small reproduction. Search [existing issues](https://github.com/AMD4x/Mafsil/issues) first, and remove private paths, files and credentials from anything you share.
+
+For vulnerabilities, use [private security reporting](https://github.com/AMD4x/Mafsil/security/advisories/new) instead of a public issue. See [SECURITY.md](SECURITY.md) for the reporting scope.
 
 ## Development
 

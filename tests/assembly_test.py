@@ -34,8 +34,11 @@ class AssemblyTests(unittest.TestCase):
         records = [hashlib.sha256(p.read_bytes()).hexdigest() + "  " + p.name for p in sorted(folder.iterdir()) if p.name != "SHA256SUMS"]
         (folder / "SHA256SUMS").write_text("\n".join(records) + "\n", encoding="ascii")
 
-    def assemble(self, success):
-        result = subprocess.run([sys.executable, str(ROOT / "scripts/assemble.py"), "--input", str(self.inputs), "--output", str(self.root / "output"), "--commit", COMMIT, "--version", "v0.1.0"], capture_output=True, text=True)
+    def assemble(self, success, expected_manifest=None):
+        command = [sys.executable, str(ROOT / "scripts/assemble.py"), "--input", str(self.inputs), "--output", str(self.root / "output"), "--commit", COMMIT, "--version", "v0.1.0"]
+        if expected_manifest is not None:
+            command.extend(["--expected-manifest-sha256", expected_manifest])
+        result = subprocess.run(command, capture_output=True, text=True)
         self.assertEqual(result.returncode == 0, success, result.stdout + result.stderr)
         return self.root / "output"
 
@@ -49,6 +52,28 @@ class AssemblyTests(unittest.TestCase):
     def test_corrupt_payload(self):
         (self.inputs / "candidate-linux_arm64/LICENSE").write_bytes(b"corruption")
         output = self.assemble(False)
+        self.assertEqual(list(output.iterdir()), [])
+
+    def approved_manifest(self):
+        checksums = {}
+        for folder in self.inputs.iterdir():
+            for line in (folder / "SHA256SUMS").read_text().splitlines():
+                checksum, name = line.split("  ")
+                checksums[name] = checksum
+        expected = "".join(f"{checksums[name]}  {name}\n" for name in sorted(checksums)).encode("ascii")
+        return expected
+
+    def test_approved_manifest_matches_exact_assets(self):
+        expected = self.approved_manifest()
+        output = self.assemble(True, hashlib.sha256(expected).hexdigest())
+        self.assertEqual((output / "SHA256SUMS").read_bytes(), expected)
+
+    def test_changed_assets_cannot_reuse_an_approved_manifest(self):
+        approved = hashlib.sha256(self.approved_manifest()).hexdigest()
+        folder = self.inputs / "candidate-linux_arm64"
+        (folder / "mafsil_v0.1.0_linux_arm64").write_bytes(b"different but internally valid candidate")
+        self.manifest(folder)
+        output = self.assemble(False, approved)
         self.assertEqual(list(output.iterdir()), [])
 
     def test_wrong_commit_even_with_valid_checksum(self):

@@ -1,0 +1,67 @@
+name: Bug report
+description: Report unexpected behavior in Mafsil, its tools or installers.
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use a small example with disposable files. Search existing issues first, and remove secrets, private paths and personal data from your report.
+        For security vulnerabilities, use [private reporting](https://github.com/AMD4x/Mafsil/security/advisories/new).
+  - type: input
+    id: version
+    attributes:
+      label: Mafsil version
+      description: Paste the output of `mafsil version`, or the source commit. If installation failed, enter the version you tried to install.
+      placeholder: Mafsil 0.1.0 (commit...)
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Windows amd64
+        - Linux amd64
+        - Linux arm64
+        - Other or unsure
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: OS and MCP client
+      description: Include OS version/distribution, client name/version, and shell version if relevant. Enter "installer only" when no client is involved.
+      placeholder: Windows 11, client name/version, PowerShell 7.x
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Include the affected tool or installer command and any relevant allowWrite/allowExec settings. Use sample data and placeholder paths.
+      placeholder: |
+        1. Start Mafsil with...
+        2. Call the tool with...
+        3. Observe...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Describe the failure and its effect on your work.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant error output
+      description: Optional. Share only the relevant, sanitized excerpt; do not upload credentials or private workspace files.
+      render: text
