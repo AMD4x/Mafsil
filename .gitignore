@@ -1,0 +1,13 @@
+# Local operator configuration and secrets never belong in source control.
+mafsil.local.json
+.env
+.env.*
+*.dpapi
+*.log
+*.exe
+*.test
+*.out
+*.syso
+/dist/
+/build/
+.DS_Store

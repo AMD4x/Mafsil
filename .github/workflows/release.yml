@@ -1,0 +1,146 @@
+name: Approved release
+
+# Ordinary pushes, tags and pull requests can never publish a release.
+on:
+  workflow_dispatch:
+    inputs:
+      source_commit:
+        description: Exact 40-character commit approved for release
+        required: true
+        type: string
+      approval:
+        description: Type publish-v0.1.0 only after the release proposal is approved
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: approved-release
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    outputs:
+      run_id: ${{ steps.ci.outputs.run_id }}
+    steps:
+      - name: Validate approval and source
+        env:
+          SOURCE: ${{ inputs.source_commit }}
+          APPROVAL: ${{ inputs.approval }}
+        run: |
+          python - <<'PY'
+          import os, re
+          assert re.fullmatch(r'[a-f0-9]{40}', os.environ['SOURCE']), 'Exact commit SHA required'
+          assert os.environ['APPROVAL'] == 'publish-v0.1.0', 'Release approval text differs'
+          PY
+      - name: Require successful CI for the approved commit
+        id: ci
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE: ${{ inputs.source_commit }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$SOURCE&status=success&per_page=20" > "$RUNNER_TEMP/ci-runs.json"
+          python - <<'PY'
+          import json, os, pathlib
+          runs = json.loads((pathlib.Path(os.environ['RUNNER_TEMP']) / 'ci-runs.json').read_text())['workflow_runs']
+          runs = [r for r in runs if r['head_sha'] == os.environ['SOURCE'] and r['head_branch'] == 'main' and r['event'] in ('push', 'workflow_dispatch') and r['conclusion'] == 'success']
+          assert runs, 'No successful main-branch CI run for this exact commit'
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write('run_id=' + str(runs[0]['id']) + '\n')
+          PY
+
+  publish:
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    # Configure required reviewers on this environment before enabling release.
+    environment: release
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.source_commit }}
+          persist-credentials: false
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ needs.verify.outputs.run_id }}
+          pattern: candidate-*
+          path: ${{ runner.temp }}/candidates
+      - name: Verify native artifacts and build provenance
+        env:
+          SOURCE: ${{ inputs.source_commit }}
+        run: |
+          test "$(cat VERSION)" = '0.1.0'
+          python scripts/assemble.py --input "$RUNNER_TEMP/candidates" --output "$RUNNER_TEMP/release" --commit "$SOURCE" --version v0.1.0
+      - name: Publish exactly the approved release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE: ${{ inputs.source_commit }}
+        run: |
+          gh release create v0.1.0 "$RUNNER_TEMP/release/"* --target "$SOURCE" --title 'Mafsil v0.1.0' --notes-file docs/releases/v0.1.0.md
+      - name: Verify published asset bytes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir "$RUNNER_TEMP/published"
+          gh release download v0.1.0 --dir "$RUNNER_TEMP/published"
+          cd "$RUNNER_TEMP/published"
+          sha256sum --strict -c SHA256SUMS
+          cmp SHA256SUMS "$RUNNER_TEMP/release/SHA256SUMS"
+
+  verify-installers:
+    name: Published install on ${{ matrix.runner }}
+    needs: publish
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [windows-2025, ubuntu-24.04, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.source_commit }}
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.12'
+      - name: Download approved release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download v0.1.0 --dir "${{ runner.temp }}/published-mafsil"
+      - name: Check published binaries and stdio
+        run: python tests/distribution_test.py --bundle "${{ runner.temp }}/published-mafsil"
+      - name: Exercise actual HTTPS install, update and uninstall
+        shell: python
+        run: |
+          import os, pathlib, subprocess
+          root = pathlib.Path(os.environ['RUNNER_TEMP'])
+          windows = os.name == 'nt'
+          script = root / 'published-mafsil' / ('install.ps1' if windows else 'install.sh')
+          destination = root / 'mafsil-online-fixture'
+          assert not destination.exists()
+          def install(action):
+              if windows:
+                  command = ['pwsh', '-NoProfile', '-File', str(script), '-Action', action, '-Version', 'v0.1.0', '-Destination', str(destination)]
+              else:
+                  command = ['sh', str(script), '--action', action.lower(), '--version', 'v0.1.0', '--destination', str(destination)]
+              subprocess.run(command, check=True, timeout=180)
+          try:
+              install('Install')
+              install('Status')
+              install('Install')
+              binary = destination / ('mafsil.exe' if windows else 'mafsil')
+              assert subprocess.check_output([str(binary), 'version']).startswith(b'Mafsil 0.1.0 (')
+          finally:
+              install('Uninstall')
+          assert not destination.exists()
