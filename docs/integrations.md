@@ -5,7 +5,7 @@
 Configure your client to launch the absolute Mafsil executable with:
 
 ```text
-serve --config /absolute/path/to/mafsil.local.json
+serve --config /absolute/path/to/Mafsil/config.json
 ```
 
 Use separate command/argument fields where the client supports them. Do not put shell syntax into an executable-path field. The client should retain stdin/stdout pipes and terminate the child cleanly on disconnect. stdout is exclusively MCP; diagnostic startup errors go to stderr.
@@ -26,7 +26,7 @@ For an upstream client exposing the documented profile CLI, a Linux-shaped examp
 ```sh
 tunnel-client init --sample sample_mcp_stdio_local --profile mafsil \
   --tunnel-id '<YOUR_TUNNEL_ID>' \
-  --mcp-command '"/absolute/path/to/mafsil" serve --config "/absolute/path/to/mafsil.local.json"'
+  --mcp-command '"/absolute/path/to/Mafsil/mafsil" serve --config "/absolute/path/to/Mafsil/config.json"'
 tunnel-client doctor --profile mafsil --explain
 tunnel-client run --profile mafsil
 ```

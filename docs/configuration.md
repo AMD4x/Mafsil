@@ -12,6 +12,8 @@ Pass one explicit JSON file to `mafsil serve --config FILE`. There is no hidden 
 | `shell` | Resolved `pwsh.exe` / `bash` | Optional absolute PowerShell 7 / Bash executable |
 | `scratchDirectory` | Required when execution is enabled | Absolute, separate directory for unique per-session temporary state |
 
+The recommended layout keeps the executable and `config.json` together in the Mafsil directory described in the [installation guide](installation.md). If execution is enabled, use an absolute `scratchDirectory` inside that Mafsil directory (for example its `scratch` subdirectory), outside the chosen workspace. JSON does not expand `$HOME`, `%LOCALAPPDATA%` or shell variables: enter the actual absolute path. Updates and uninstall preserve these user-owned files.
+
 One server configuration exposes one workspace. Run another stdio instance for another workspace. Client-supplied MCP roots cannot widen the boundary.
 
 The `limits` object accepts:

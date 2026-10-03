@@ -25,6 +25,7 @@ def main():
     run(sys.executable, "scripts/licenses.py", "--check")
     run(sys.executable, "scripts/check_source.py")
     run(sys.executable, "tests/assembly_test.py", "-v")
+    run(sys.executable, "tests/bootstrap_test.py", "-v")
     if args.race:
         run("go", "test", "-race", "-shuffle=on", "-timeout=180s", "./...")
     if args.security:

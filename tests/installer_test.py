@@ -34,13 +34,14 @@ class InstallerTests(unittest.TestCase):
         self.dest = self.root / "installed space [literal]"
         self.script = ROOT / "scripts" / ("install.ps1" if WINDOWS else "install.sh")
 
-    def run_installer(self, action="Install", success=True, script=None, destination=None):
+    def run_installer(self, action="Install", success=True, script=None, destination=None, version="v0.1.0", bundle=None):
         destination = destination or self.dest
         script = script or self.script
+        bundle = bundle or self.bundle
         if WINDOWS:
-            command = ["pwsh.exe", "-NoLogo", "-NoProfile", "-NonInteractive", "-File", str(script), "-Action", action, "-Version", "v0.1.0", "-Destination", str(destination), "-BundleDirectory", str(self.bundle)]
+            command = ["pwsh.exe", "-NoLogo", "-NoProfile", "-NonInteractive", "-File", str(script), "-Action", action, "-Version", version, "-Destination", str(destination), "-BundleDirectory", str(bundle)]
         else:
-            command = ["sh", str(script), "--action", action.lower(), "--version", "v0.1.0", "--destination", str(destination), "--bundle", str(self.bundle)]
+            command = ["sh", str(script), "--action", action.lower(), "--version", version, "--destination", str(destination), "--bundle", str(bundle)]
         result = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=45)
         self.assertEqual(result.returncode == 0, success, result.stdout + result.stderr)
         return result
@@ -69,6 +70,38 @@ class InstallerTests(unittest.TestCase):
         (self.bundle / "LICENSE").write_text("corrupt fixture", encoding="utf-8")
         self.run_installer(success=False)
         self.assertEqual(self.installed(), before)
+        self.no_debris()
+
+    def test_upgrade_from_older_fixture_preserves_configuration(self):
+        # A real native executable simulates an older installed version. It is
+        # deliberately a version-probe fixture, not a previously shipped build.
+        older = self.root / "older-bundle"
+        shutil.copytree(self.bundle, older)
+        candidates = list(older.glob("mafsil_v0.1.0_*"))
+        import platform
+        target = ("windows_amd64.exe" if WINDOWS else "linux_" + ("arm64" if platform.machine().lower() in ("aarch64", "arm64") else "amd64"))
+        for candidate in candidates:
+            candidate.unlink()
+        source = self.root / "older.go"
+        source.write_text('package main\nimport "fmt"\nfunc main() { fmt.Println("Mafsil 0.0.9 (upgrade-fixture)") }\n', encoding="utf-8")
+        subprocess.run(["go", "build", "-trimpath", "-o", str(older / ("mafsil_v0.0.9_" + target)), str(source)], check=True, cwd=ROOT, timeout=120, env=os.environ | {"CGO_ENABLED": "0"})
+        records = [digest(p) + "  " + p.name for p in sorted(older.iterdir()) if p.name != "SHA256SUMS"]
+        (older / "SHA256SUMS").write_text("\n".join(records) + "\n", encoding="ascii")
+        self.run_installer(version="v0.0.9", bundle=older)
+        config = self.dest / "config.json"
+        config.write_text('{"workspace":"operator-owned fixture"}', encoding="utf-8")
+        before = config.read_bytes()
+        scratch = self.dest / "scratch"
+        scratch.mkdir()
+        (scratch / "keep.txt").write_text("preserve", encoding="utf-8")
+        binary = self.dest / ("mafsil.exe" if WINDOWS else "mafsil")
+        old_digest = digest(binary)
+        self.run_installer()
+        self.assertNotEqual(digest(binary), old_digest)
+        self.assertEqual(config.read_bytes(), before)
+        self.assertEqual((scratch / "keep.txt").read_text(), "preserve")
+        status = self.run_installer("Status").stdout
+        self.assertIn("v0.1.0", status)
         self.no_debris()
 
     def test_installed_script_can_uninstall_itself(self):

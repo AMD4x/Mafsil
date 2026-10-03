@@ -16,7 +16,7 @@ Mafsil connects an MCP-compatible agent to a workspace on Windows or Linux. Read
 
 **Read only by default.** You choose the workspace and separately enable file changes and command execution. Mafsil runs as a local stdio process, needs no inbound network port, and starts no background service.
 
-> **Mafsil v0.1.0 is available for Windows x64, Linux x64 and Linux ARM64.** [Download the release](https://github.com/AMD4x/Mafsil/releases/tag/v0.1.0) or use the installers below. Native CI validates all three targets; see [validation status](docs/validation.md).
+> **Available for Windows x64, Linux x64 and Linux ARM64.** [Download the latest release](https://github.com/AMD4x/Mafsil/releases/latest) or use the installers below. Native CI validates all three targets; see [validation status](docs/validation.md).
 
 ## What it does
 
@@ -35,33 +35,49 @@ The name comes from the Arabic **مَفْصِل**, a point where two parts conne
 
 ## Get started
 
-### Install
+### Install or update Mafsil
 
-Runtime binaries need no Go toolchain. Windows installation requires PowerShell 7. Linux installation uses the standard GNU utilities listed in the [installation guide](docs/installation.md).
+Run one command for your platform. It selects the latest stable release and verifies the release installer before running it. Installation does **not** choose a workspace or change your projects.
 
 **Windows — PowerShell 7**
 
 ```powershell
-Invoke-WebRequest 'https://github.com/AMD4x/Mafsil/releases/download/v0.1.0/install.ps1' -OutFile .\install.ps1
-pwsh -NoProfile -File .\install.ps1 -Version v0.1.0
-$MafsilDir = Join-Path $env:LOCALAPPDATA 'Programs\Mafsil'
-& "$MafsilDir\mafsil.exe" init --workspace 'D:\Projects\demo' --output .\mafsil.local.json
-& "$MafsilDir\mafsil.exe" doctor --config .\mafsil.local.json
+irm https://raw.githubusercontent.com/AMD4x/Mafsil/main/install.ps1 -ErrorAction Stop | iex
 ```
 
-**Linux — x64 / ARM64**
+**Linux — Bash, x64 / ARM64**
 
-```sh
-curl --proto '=https' --proto-redir '=https' -fL \
-  https://github.com/AMD4x/Mafsil/releases/download/v0.1.0/install.sh -o install.sh
-sh install.sh --version v0.1.0
-"$HOME/.local/share/mafsil/mafsil" init --workspace /path/to/workspace --output ./mafsil.local.json
-"$HOME/.local/share/mafsil/mafsil" doctor --config ./mafsil.local.json
+```bash
+(set -o pipefail; curl --proto '=https' -fsSL https://raw.githubusercontent.com/AMD4x/Mafsil/main/install.sh | sh)
 ```
 
-Replace the workspace with an existing directory you intend to expose. `init` never overwrites an existing configuration. `doctor` checks local configuration and shell availability without making network calls or running commands. Keep the configuration outside directories agents may edit.
+To update later, close your MCP clients and run the same command again. Your configuration and workspace files are preserved. There is no background updater or persistent PATH change. See the [installation guide](docs/installation.md) for version pinning, custom locations, status and uninstall.
 
-Installers verify SHA-256 and print the executable path. They require no administrator/root elevation and make no persistent PATH or service changes. For updates, custom directories, offline bundles and removal, see the [installation guide](docs/installation.md). To compile instead, [build from source](#build-from-source).
+### Choose an existing workspace
+
+Your workspace is **your own existing project folder**, wherever you keep it. No particular drive or folder name is required. The commands below ask for its full path; they do not create or move that folder.
+
+Mafsil keeps its executable and configuration together in its own directory. Keep that directory outside the workspace you expose to an agent.
+
+**Windows — PowerShell 7**
+
+```powershell
+$MafsilHome = Join-Path $env:LOCALAPPDATA 'Programs\Mafsil'
+$Workspace = Read-Host 'Full path to your existing workspace folder'
+& "$MafsilHome\mafsil.exe" init --workspace "$Workspace" --output "$MafsilHome\config.json"
+& "$MafsilHome\mafsil.exe" doctor --config "$MafsilHome\config.json"
+```
+
+**Linux — Bash**
+
+```bash
+MAFSIL_HOME="$HOME/.local/share/mafsil"
+read -r -p 'Full path to your existing workspace folder: ' MAFSIL_WORKSPACE
+"$MAFSIL_HOME/mafsil" init --workspace "$MAFSIL_WORKSPACE" --output "$MAFSIL_HOME/config.json"
+"$MAFSIL_HOME/mafsil" doctor --config "$MAFSIL_HOME/config.json"
+```
+
+For a custom installation or source build, set `MafsilHome` / `MAFSIL_HOME` to the directory containing your executable. Run `init` once: it refuses an existing configuration rather than overwriting it. `doctor` checks configuration without running commands or connecting to a network service.
 
 ### Connect an MCP client
 
@@ -71,14 +87,14 @@ Use an absolute executable path and an absolute configuration path in your clien
 {
   "mcpServers": {
     "mafsil": {
-      "command": "/absolute/path/to/mafsil",
-      "args": ["serve", "--config", "/absolute/path/to/mafsil.local.json"]
+      "command": "/absolute/path/to/Mafsil/mafsil",
+      "args": ["serve", "--config", "/absolute/path/to/Mafsil/config.json"]
     }
   }
 }
 ```
 
-On Windows, use `mafsil.exe` and JSON-escaped backslashes (for example, `D:\\Tools\\Mafsil\\mafsil.exe`). Some clients use a different settings structure; the command and arguments stay the same. Keep the configuration outside directories agents may edit.
+Replace both paths with the executable and `config.json` in your Mafsil directory. On Windows use `mafsil.exe` and escape each backslash as `\\` in JSON, or use forward slashes. Some clients use a different settings structure; the command and arguments stay the same.
 
 Start with `server_info`, `list_directory` and `read_file`. The client owns the stdio process lifetime. Disconnecting closes managed sessions.
 
@@ -101,7 +117,7 @@ Omitted limits use conservative defaults. Enable execution only for a trusted cl
   "workspace": "/path/to/workspace",
   "allowWrite": true,
   "allowExec": true,
-  "scratchDirectory": "/path/to/mafsil-scratch"
+  "scratchDirectory": "/absolute/path/to/Mafsil/scratch"
 }
 ```
 
@@ -125,7 +141,7 @@ See [tool contracts and examples](docs/tools.md) and [configuration](docs/config
 
 ## Installation and updates
 
-The [terminal installers](docs/installation.md) download the correct binary and verify its SHA-256. They run without administrator/root elevation, preserve configurations and unrelated files, and roll back ordinary update failures. Re-running the installer updates the managed files. The same script provides status and uninstall commands.
+The [terminal installers](docs/installation.md) select the latest stable release, download the correct binary and verify its SHA-256. They run without administrator/root elevation, preserve configurations and unrelated files, and roll back ordinary update failures. Re-running the installer updates the managed files. The same script provides status and uninstall commands.
 
 There is no automatic update, service registration, persistent PATH edit, or startup integration. Release binaries carry Windows version/icon resources and are distributed separately for Windows amd64, Linux amd64 and Linux arm64.
 
@@ -157,19 +173,17 @@ Windows, from the source directory:
 
 ```powershell
 go build -trimpath -o ..\mafsil-build\mafsil.exe .\cmd\mafsil
-& ..\mafsil-build\mafsil.exe init --workspace 'D:\Projects\demo' --output .\mafsil.local.json
-& ..\mafsil-build\mafsil.exe doctor --config .\mafsil.local.json
+& ..\mafsil-build\mafsil.exe version
 ```
 
 Linux:
 
 ```sh
 go build -trimpath -o ../mafsil-build/mafsil ./cmd/mafsil
-../mafsil-build/mafsil init --workspace /path/to/workspace --output ./mafsil.local.json
-../mafsil-build/mafsil doctor --config ./mafsil.local.json
+../mafsil-build/mafsil version
 ```
 
-Replace the workspace with an existing directory you intend to expose. `init` never overwrites an existing configuration. `doctor` checks local configuration and required shell availability; it does not make network calls or execute a command.
+Then follow [workspace setup](#choose-an-existing-workspace), using the build directory as your Mafsil directory. Building the executable does not configure a workspace.
 
 ### Verify changes
 

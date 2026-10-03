@@ -1,73 +1,122 @@
 # Install, update and remove
 
-Install **v0.1.0** from the [official release](https://github.com/AMD4x/Mafsil/releases/tag/v0.1.0). The commands below pin that version; use an explicit published version when updating.
+Installing Mafsil and choosing a workspace are separate steps. Installation manages Mafsil's own files; it never creates, moves or selects a project folder.
 
-Release users need no Go toolchain. Windows requires PowerShell 7 to run the installer; command tools also use it by default. Linux requires the usual GNU userland (`sh`, `curl`, `sha256sum`, `stat`, `realpath`, `timeout`, `awk`, `grep` and coreutils). Bash is needed only for shell command/session tools.
+## Install the latest stable release
 
-## Windows amd64
+These commands fetch the official bootstrap from this repository and execute it. The bootstrap resolves one stable release, verifies its installer against `SHA256SUMS`, and runs that versioned installer. The installer verifies the binary and other managed files before changing an installation.
 
-Download the versioned script, inspect it if required by your organization's policy, then run it in PowerShell 7:
-
-```powershell
-Invoke-WebRequest 'https://github.com/AMD4x/Mafsil/releases/download/v0.1.0/install.ps1' -OutFile .\install.ps1
-pwsh -NoProfile -File .\install.ps1 -Version v0.1.0
-```
-
-Default location: `%LOCALAPPDATA%\Programs\Mafsil`. No administrator permission is requested. The installer prints the full executable path. Use that path in MCP client settings, or add it to the current terminal session's PATH yourself if desired. The installer does not change execution policy or persistent PATH.
+**Windows x64 — PowerShell 7**
 
 ```powershell
-$MafsilDir = Join-Path $env:LOCALAPPDATA 'Programs\Mafsil'
-& "$MafsilDir\mafsil.exe" version
-& "$MafsilDir\mafsil.exe" init --workspace 'D:\Projects\demo' --output .\mafsil.local.json
-& "$MafsilDir\install.ps1" -Action Status
+irm https://raw.githubusercontent.com/AMD4x/Mafsil/main/install.ps1 -ErrorAction Stop | iex
 ```
 
-To update, disconnect clients, download the installer for the desired published version and rerun it with that explicit `-Version`. To remove:
+**Linux x64 / ARM64 — Bash**
+
+```bash
+(set -o pipefail; curl --proto '=https' -fsSL https://raw.githubusercontent.com/AMD4x/Mafsil/main/install.sh | sh)
+```
+
+The Linux command uses a subshell with `pipefail` so a failed download fails the command without changing your terminal settings. The complete bootstrap is parsed before installation begins. If you prefer to inspect the bootstrap first, use the download-and-run commands under [specific versions](#install-a-specific-version).
+
+Runtime binaries need no Go installation. Windows requires PowerShell 7. Linux requires Bash for the command above, plus `sh`, `curl`, `sha256sum`, `stat`, `realpath`, `timeout`, `awk`, `grep`, `sed` and the usual coreutils.
+
+## One Mafsil directory; your workspace stays separate
+
+| Platform | Default Mafsil directory |
+| --- | --- |
+| Windows | `%LOCALAPPDATA%\Programs\Mafsil` |
+| Linux | `$HOME/.local/share/mafsil` |
+
+The default locations remain compatible with existing installations. The directory contains the executable, management script, license/notices and installation record. The recommended setup also stores your `config.json` there; an optional `scratch` subdirectory can hold terminal session data when execution is enabled.
+
+Your workspace is an **existing folder you choose**, on any supported local drive/location. It stays where it is. Keep the Mafsil directory outside that workspace. No particular drive letter or sample project directory is required.
+
+Follow [Choose an existing workspace](../README.md#choose-an-existing-workspace) once after installation. `init` refuses to overwrite an existing configuration. A custom installation uses the same layout: substitute your actual Mafsil directory in the setup commands.
+
+## Update
+
+1. Close MCP clients using Mafsil so their processes release the executable.
+2. Run the **same install command** again. It selects the latest stable release and updates the existing default installation.
+3. Restart your MCP clients. Keep the same configuration and executable paths.
+
+For a custom location, use the same explicit destination again; see below. Your configuration, scratch data and unrelated files are not managed or removed by the updater. The bootstrap does not assume that its own script version is the newest application version: it resolves the published stable release each time.
+
+There is no background update service, automatic restart, persistent PATH change, or administrator/root elevation. A running executable can block an update on Windows; the installer reports the failure rather than terminating your clients.
+
+## Install a specific version
+
+Use a published `vMAJOR.MINOR.PATCH` tag. The example below selects the existing `v0.1.0` release; replace that tag deliberately when selecting another published version.
+
+**Windows**
 
 ```powershell
-& "$MafsilDir\install.ps1" -Action Uninstall
+Invoke-WebRequest https://raw.githubusercontent.com/AMD4x/Mafsil/main/install.ps1 -OutFile .\mafsil-install.ps1 -ErrorAction Stop
+pwsh -NoProfile -File .\mafsil-install.ps1 -Version v0.1.0
 ```
 
-Use `-Destination 'D:\Tools\Mafsil'` consistently for a custom directory, including status and uninstall. A running executable or another process holding managed files can block an update on Windows; close clients and retry. Mafsil's installer does not terminate existing client processes.
+For a custom directory, pass `-Destination` to that command, for example `-Destination (Join-Path $HOME 'Apps\Mafsil')`. Updates must use that same destination.
 
-## Linux amd64 / arm64
+**Linux**
+
+```bash
+curl --proto '=https' -fsSLo mafsil-install.sh https://raw.githubusercontent.com/AMD4x/Mafsil/main/install.sh
+sh mafsil-install.sh --version v0.1.0
+```
+
+For a custom directory, add `--destination "$HOME/Apps/Mafsil"`. Use the same destination when updating. These are application installation locations, not workspace examples.
+
+## Status and uninstall
+
+For a custom installation, change the first variable to your actual Mafsil directory. Run only the operation you need.
+
+**Windows**
+
+```powershell
+$MafsilHome = Join-Path $env:LOCALAPPDATA 'Programs\Mafsil'
+& "$MafsilHome\mafsil.exe" version
+& "$MafsilHome\install.ps1" -Action Status -Destination "$MafsilHome"
+```
+
+```powershell
+$MafsilHome = Join-Path $env:LOCALAPPDATA 'Programs\Mafsil'
+& "$MafsilHome\install.ps1" -Action Uninstall -Destination "$MafsilHome"
+```
+
+**Linux**
+
+```bash
+MAFSIL_HOME="$HOME/.local/share/mafsil"
+"$MAFSIL_HOME/mafsil" version
+sh "$MAFSIL_HOME/install.sh" --action status --destination "$MAFSIL_HOME"
+```
+
+```bash
+MAFSIL_HOME="$HOME/.local/share/mafsil"
+sh "$MAFSIL_HOME/install.sh" --action uninstall --destination "$MAFSIL_HOME"
+```
+
+Uninstall removes only verified managed files. It preserves `config.json`, scratch data and unrelated files, so the directory may remain. There is no implicit purge mode.
+
+## Integrity and recovery
+
+Checksums downloaded from the same release detect corruption and mismatched files; they do not independently authenticate a compromised publishing account. Binaries are not Authenticode-signed. The versioned release installers accept an independently obtained binary digest through Windows `-ExpectedSHA256 DIGEST` or Linux `--sha256 DIGEST`.
+
+An update verifies the existing installation record and hashes, stages the selected release, retains originals and checks the replacement before committing. Ordinary failures roll back. Unknown or modified managed files are preserved by refusing the operation. Concurrent installers are excluded with an exclusive lock. Keep configuration and personal files out of the managed executable/license/script filenames.
+
+Power loss or forced termination can leave `.mafsil-install-*` staging/backups and an `.install-lock`. Stop clients/installers, inspect the exact installation and saved originals, and recover needed files before removing a specific stale lock. A failed rollback reports the retained backup path. Updates are not crash-atomic filesystem transactions.
+
+## Offline installation
+
+Obtain the raw binary, `SHA256SUMS`, `LICENSE`, `THIRD_PARTY_NOTICES.md` and the platform's **versioned release installer** from one release. Run that installer with its explicit version and a local bundle directory:
+
+```powershell
+pwsh -NoProfile -File .\bundle\install.ps1 -Version v0.1.0 -BundleDirectory .\bundle
+```
 
 ```sh
-curl --proto '=https' --proto-redir '=https' -fL \
-  https://github.com/AMD4x/Mafsil/releases/download/v0.1.0/install.sh -o install.sh
-sh install.sh --version v0.1.0
+sh ./bundle/install.sh --version v0.1.0 --bundle ./bundle
 ```
 
-Default location: `$HOME/.local/share/mafsil`. Architecture is detected with `uname -m`.
-
-```sh
-"$HOME/.local/share/mafsil/mafsil" version
-"$HOME/.local/share/mafsil/mafsil" init --workspace /path/to/workspace --output ./mafsil.local.json
-sh "$HOME/.local/share/mafsil/install.sh" --action status
-```
-
-To update, disconnect clients and rerun the new version's installer with an explicit `--version`. To remove:
-
-```sh
-sh "$HOME/.local/share/mafsil/install.sh" --action uninstall
-```
-
-Use `--destination /absolute/install/directory` consistently for a custom installation. No `sudo`, service, shell-profile or persistent PATH changes are performed. Existing processes continue using their old executable until restarted; close clients before an update.
-
-## Integrity and rollback
-
-The installer stages the binary, license, third-party notices and its platform's management script. It checks all their SHA-256 entries before running the candidate's version command or changing the existing installation. No archive is extracted. An installation record contains only version/file hashes, never credentials.
-
-For a separately obtained binary digest, use Windows `-ExpectedSHA256 DIGEST` or Linux `--sha256 DIGEST`. Checksums downloaded from the same release detect corruption, but do not independently authenticate a compromised release account. Binaries are not Authenticode-signed and the first release does not promise a separate signing key.
-
-An update verifies ownership and previous hashes, retains original files, moves the candidate into place, then verifies the new installation. Ordinary failures roll back. Unknown and modified files are preserved by refusing the operation. Concurrent installers are excluded with an exclusive lock. Do not edit managed files during installation.
-
-Configuration and secret files are outside the managed file list. Uninstall removes only verified managed files and leaves unrelated files intact. There is no implicit purge mode. A damaged installation record requires explicit recovery rather than guessing which files belong to Mafsil.
-
-Power loss or forced process termination can leave `.mafsil-install-*` staging/backups and an `.install-lock`. Do not delete these blindly: stop installers/clients, inspect the exact installation and saved originals, restore needed files, and only then remove the specific stale lock. A rollback failure reports the retained backup path. The updater is not a crash-atomic filesystem transaction.
-
-## Offline installation and tests
-
-Place the appropriate raw binary, `SHA256SUMS`, `LICENSE`, `THIRD_PARTY_NOTICES.md`, and platform installer in a local directory. Pass `-BundleDirectory DIR` on Windows or `--bundle DIR` on Linux. The same integrity checks apply and no download occurs.
-
-Development tests use only this offline mode with explicit temporary destinations. Native Windows amd64 and Linux amd64/arm64 installer fixtures have passed in CI; see [validation status](validation.md). Actual HTTPS release-download installation, idempotent update and uninstall have also passed on all three targets in the approved release workflow.
+The root bootstraps select/download releases and require network access; offline mode belongs to the release's installer. See [validation status](validation.md) for native tests, injected-failure fixtures and real HTTPS checks. No tests install Mafsil for use on the local development machine.

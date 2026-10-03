@@ -55,17 +55,24 @@ jobs:
         run: |
           $tokens = $null
           $errors = $null
-          [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'scripts/install.ps1'), [ref]$tokens, [ref]$errors) | Out-Null
-          if ($errors.Count) { throw ($errors -join [Environment]::NewLine) }
+          foreach ($path in @('install.ps1', 'scripts/install.ps1')) {
+            [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD $path), [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count) { throw ($errors -join [Environment]::NewLine) }
+          }
       - name: Check shell syntax
         if: runner.os == 'Linux'
-        run: sh -n scripts/install.sh
+        run: |
+          sh -n install.sh
+          sh -n scripts/install.sh
       - name: Build candidate with native resources
         run: python scripts/package.py --version v0.1.0 --target ${{ matrix.target }} --output "${{ runner.temp }}/mafsil-candidate"
       - name: Exercise CLI, stdio and release payload
         run: python tests/distribution_test.py --bundle "${{ runner.temp }}/mafsil-candidate"
       - name: Exercise installer and rollback in fixtures
         run: python tests/installer_test.py --bundle "${{ runner.temp }}/mafsil-candidate" -v
+      - name: Exercise public bootstrap, README setup and update in a temporary home
+        if: github.event_name != 'pull_request'
+        run: python tests/bootstrap_online_test.py
       - name: Reject generated source changes
         run: git diff --exit-code
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

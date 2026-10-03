@@ -38,6 +38,8 @@ The package script cross-builds all three targets by default. `--target windows/
 
 Installer tests always use offline bundles and disposable explicit destinations. Never replace them with a real local install, service registration, persistent PATH/Registry change or a test on a private remote host. Linux installer tests run natively in Linux CI.
 
+Root `install.ps1` / `install.sh` are the stable network bootstraps; `scripts/install.*` are the versioned transaction installers packaged with each release. `tests/bootstrap_test.py` replaces network responses with fixtures while exercising real checksum verification and delegation. Native CI also runs `tests/bootstrap_online_test.py` against public release downloads in a temporary home, including the actual README workspace commands. An older-version executable used by the upgrade test is a synthetic native fixture, not a previously released binary.
+
 For dependencies, update pinned versions deliberately, run `go mod tidy`, regenerate notices with `python scripts/licenses.py`, and rerun security checks. The direct runtime dependencies are the official MCP SDK (protocol compatibility and schema validation) and `golang.org/x/sys` (native handles, PTY and file metadata). The complete notices include transitive linked modules and the Go runtime. Build-only resource tools are not linked into Mafsil.
 
 Changes to file or process behavior need focused regression tests for failure paths as well as success. Preserve byte-level file semantics, process ownership, bounded resources and truthful errors. Do not add a convenience bypass that silently expands authority. Describe platform differences explicitly.

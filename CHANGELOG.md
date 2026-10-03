@@ -1,5 +1,12 @@
 # Changelog
 
+## Installer and documentation updates — 2026-10-03
+
+- Stable one-command bootstrap entrypoints select the latest published release and verify its installer before execution. Running the same command again updates an existing installation.
+- Installation, workspace setup and MCP connection are separate steps. Workspace prompts use an existing folder chosen by the user, with no assumed drive or project path.
+- Keep configuration alongside Mafsil, outside the workspace; updates and uninstall preserve user configuration and scratch data.
+- Native bootstrap checks cover corrupted downloads, release selection, README setup and updates. Upgrade fixtures exercise replacement from a simulated older executable.
+
 ## 0.1.0 — 2026-10-03
 
 First public release.
