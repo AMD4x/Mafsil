@@ -119,4 +119,4 @@ pwsh -NoProfile -File .\bundle\install.ps1 -Version v0.1.0 -BundleDirectory .\bu
 sh ./bundle/install.sh --version v0.1.0 --bundle ./bundle
 ```
 
-The root bootstraps select/download releases and require network access; offline mode belongs to the release's installer. See [validation status](validation.md) for native tests, injected-failure fixtures and real HTTPS checks. No tests install Mafsil for use on the local development machine.
+The root bootstraps select/download releases and require network access; offline mode belongs to the release's installer. See [validation status](validation.md) for native tests, injected-failure fixtures and real HTTPS checks.

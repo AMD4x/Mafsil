@@ -35,7 +35,7 @@ On Windows, provide equivalent absolute Windows paths inside the quoted command 
 
 The upstream client opens an outbound HTTPS connection; Mafsil itself listens on no port. Authentication and reachability are the tunnel client's responsibility. A public GitHub project does not make each user's local MCP endpoint a public plugin endpoint.
 
-The standard stdio behavior is tested locally with protocol fixtures and the official SDK client. Real tunnel credentials, hosted account permissions, upstream readiness and end-to-end OpenAI product connectivity have **not** been exercised. Those checks require a separately authorized operator environment. No live tunnel is used in the test suite.
+The standard stdio behavior is tested locally with protocol fixtures and the official SDK client. Real tunnel credentials, hosted account permissions, upstream readiness and end-to-end OpenAI product connectivity have **not** been exercised. Live connectivity requires valid credentials and account permissions and is outside the automated test suite.
 
 ## Other remote adapters
 

@@ -10,7 +10,7 @@ For larger changes, open an issue describing the problem and proposed behavior b
 
 Use Go 1.27.0 or later and Python 3.12+ for verification and packaging scripts. Windows terminal tests require PowerShell 7 and ConPTY-capable Windows. Linux terminal tests require Bash and `/dev/ptmx`.
 
-Keep generated build outputs and test fixtures outside the source tree. Project tests are designed to use disposable paths and must not depend on production credentials, private remote machines or persistent system changes.
+Keep generated build outputs and test fixtures outside the source tree. Project tests use disposable paths and must not depend on production credentials or persistent system changes.
 
 ## Verify changes
 
