@@ -7,7 +7,7 @@ Mafsil connects an MCP-compatible agent to a workspace on Windows or Linux. Read
 
 **Read only by default.** You choose the workspace and separately enable file changes and command execution. Mafsil runs as a local stdio process, needs no inbound network port, and starts no background service.
 
-> **Before the first release:** this repository is prepared for v0.1.0. Release downloads and bootstrap URLs become available only after the first approved release. Use a source build today. Windows has been tested locally; Linux amd64/arm64 have been cross-compiled and await native CI. See [validation status](docs/validation.md).
+> **Before the first release:** this repository is prepared for v0.1.0. Release downloads and bootstrap URLs become available only after the first approved release. Use a source build today. Native CI has passed on Windows amd64, Linux amd64 and Linux arm64, including race checks, packaged binaries and installer fixtures. See [validation status](docs/validation.md).
 
 ## What it does
 

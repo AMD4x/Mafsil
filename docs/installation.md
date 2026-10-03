@@ -70,4 +70,4 @@ Power loss or forced process termination can leave `.mafsil-install-*` staging/b
 
 Place the appropriate raw binary, `SHA256SUMS`, `LICENSE`, `THIRD_PARTY_NOTICES.md`, and platform installer in a local directory. Pass `-BundleDirectory DIR` on Windows or `--bundle DIR` on Linux. The same integrity checks apply and no download occurs.
 
-Development tests use only this offline mode with explicit temporary destinations. Native Linux installer behavior must be validated by CI; a Windows simulation is not evidence of Linux execution.
+Development tests use only this offline mode with explicit temporary destinations. Native Windows amd64 and Linux amd64/arm64 installer fixtures have passed in CI; see [validation status](validation.md). Actual release-download installation will be tested after the first approved release exists.
