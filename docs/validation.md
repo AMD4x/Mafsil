@@ -2,6 +2,8 @@
 
 This document separates implementation evidence from deployment claims. Status is recorded during local preparation on **2026-10-03**. No GitHub Actions run or release is claimed by this local report.
 
+The core runtime checks below preceded the final branding and Markdown-notice update. The updated artwork, preserved legal text and source references were checked separately. Application binaries have not been rebuilt after those changes; CI must produce and validate candidates from the publication commit.
+
 | Area | Locally executed | Remaining validation |
 | --- | --- | --- |
 | Windows amd64 | Go unit/integration tests; real process trees, PowerShell state, pipes, ConPTY input/resize and terminal output | Native hosted-runner CI and race detector |
@@ -11,7 +13,7 @@ This document separates implementation evidence from deployment claims. Status i
 | Files | Real NTFS fixtures for revisions, no-clobber, Unicode, mixed endings, hard links, junctions, DACL preservation and alternate streams | Native Linux metadata and special-file tests |
 | Failure recovery | Injected IO failure during real file edits and installer publication; precommit/postcommit cancellation cases | Crash/power-loss recovery remains manual and is not claimed atomic |
 | Installer | Windows offline fixture install/status/update/uninstall, checksums, ownership, lock exclusion, reparse rejection and rollback | Native Linux fixtures; real release download URLs after publication |
-| Distribution | All target binaries built; Windows icon/version resources; checksums, headers, native CLI/protocol and five release-assembly integrity/provenance fixtures | Native CI artifact production and actual published download verification |
+| Distribution | Earlier three-target candidates: Windows icon/version resources, checksums, headers and native CLI/protocol; five assembly integrity/provenance fixtures | Rebuild the approved artwork and Markdown notices into native CI artifacts; verify actual published downloads |
 | Input resilience | Bounded Windows fuzz smoke runs for paths and terminal sequences; malformed frames, cancellation and unread-response backpressure fixtures | Longer native CI fuzzing |
 | Static/security | `go vet`, Staticcheck and govulncheck run locally | CI repeats these checks against its current vulnerability database |
 | Tunnel | Standard stdio side of the integration | No real credentials, hosted account, live tunnel or remote user device was used |

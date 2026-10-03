@@ -65,7 +65,7 @@ def main():
             inventory["targets"][target] = subprocess.check_output(["go", "version", "-m", str(output / name)], text=True).replace(str(output / name), name)
             if resource.exists():
                 resource.unlink()
-    for name in ("LICENSE", "THIRD_PARTY_NOTICES.txt"):
+    for name in ("LICENSE", "THIRD_PARTY_NOTICES.md"):
         shutil.copy2(ROOT / name, output / name)
     for name in ("install.ps1", "install.sh"):
         shutil.copy2(ROOT / "scripts" / name, output / name)

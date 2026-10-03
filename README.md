@@ -1,6 +1,6 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/brand/logo-dark.svg">
-  <img src="assets/brand/logo-light.svg" alt="Mafsil — Workspace tools. On your terms." width="860">
+  <img src="assets/brand/logo-light.svg" alt="Mafsil" width="768">
 </picture>
 
 Mafsil connects an MCP-compatible agent to a workspace on Windows or Linux. Read files, make precise conditional edits, run commands, and work with interactive terminals through a small set of composable tools.
@@ -17,7 +17,10 @@ Mafsil connects an MCP-compatible agent to a workspace on Windows or Linux. Read
 - Retains bounded process output with replay offsets, cancellation, timeouts, terminal resize and plain-text screen snapshots.
 - Speaks MCP `2026-07-28` and the four earlier revisions supported by the official Go SDK.
 
-![Mafsil architecture and capability boundaries](assets/architecture.svg)
+<picture>
+  <source media="(max-width: 600px)" srcset="assets/architecture-mobile.svg">
+  <img src="assets/architecture.svg" alt="An MCP client connects to Mafsil. File tools stay in the workspace; command and terminal tools are enabled explicitly and use the account's permissions." width="100%">
+</picture>
 
 The name comes from the Arabic **مَفْصِل**, a point where two parts connect.
 
@@ -131,4 +134,4 @@ python scripts/verify.py --security
 
 Use `--race` where a C compiler is available. [CONTRIBUTING.md](CONTRIBUTING.md) explains fixtures, native tests, fuzzing, packaging and dependency notices. [CI](.github/workflows/ci.yml) runs native Windows amd64, Linux amd64 and Linux arm64 checks; the release workflow requires a separate manual approval and successful CI for the exact source commit.
 
-Mafsil's code and original brand assets use the [MIT license](LICENSE). Dependencies retain the licenses reproduced in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt).
+Mafsil's code and original brand assets use the [MIT license](LICENSE). Dependencies retain the licenses reproduced in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

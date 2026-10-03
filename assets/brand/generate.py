@@ -1,61 +1,145 @@
 #!/usr/bin/env python3
-"""Editable, original Mafsil identity geometry. No font files or external art."""
+"""Original Mafsil vector masters and their applications. No font files."""
 from pathlib import Path
 import html
 
 HERE = Path(__file__).resolve().parent
-INK, ACCENT, PAPER, MUTED = "#1c2c32", "#ea693c", "#f5f2e9", "#697c80"
+INK, LAGOON, FOAM, MIST, SLATE = "#163447", "#007C83", "#6AE6CA", "#F1F7F8", "#526B78"
+LINE, WHITE = "#C7D9DF", "#FFFFFF"
 
-def svg(w, h, body, title):
-    return f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}" role="img" aria-label="{html.escape(title)}"><title>{html.escape(title)}</title>{body}</svg>\n'
 
-def icon(x=0, y=0, scale=1, color=INK, accent=ACCENT):
-    return f'<g transform="translate({x} {y}) scale({scale})"><path fill="{color}" d="M18 96V24h22l24 24v28L40 52v44z"/><path fill="{accent}" d="M68 48l22-24h22v72H90V52L68 76z"/></g>'
+def svg(width, height, body, title, viewbox=None):
+    viewbox = viewbox or f"0 0 {width} {height}"
+    title = html.escape(title)
+    return f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="{viewbox}" role="img" aria-label="{title}"><title>{title}</title>{body}</svg>\n'
 
-def wordmark(x, y, scale=1, color=INK):
-    # Custom single-line glyphs, intentionally independent of a typeface file.
-    paths = 'M0 56V24Q0 12 12 12Q24 12 24 24V56M24 24Q24 12 36 12Q48 12 48 24V56 M106 12V56M106 34a22 22 0 1 0-44 0a22 22 0 1 0 44 0 M126 56V10Q126-6 145-6M115 18H143 M183 18C169 6 150 13 152 25C153 38 180 33 181 46C182 59 162 62 150 51 M203 26V56 M225-5V44Q225 56 238 56'
-    return f'<g transform="translate({x} {y}) scale({scale})" fill="none" stroke="{color}" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"><path d="{paths}"/><circle cx="203" cy="8" r="0.8" stroke-width="8"/></g>'
 
-def text(x, y, value, size=20, color=INK, weight=400):
-    return f'<text x="{x}" y="{y}" fill="{color}" font-family="Segoe UI,DejaVu Sans,sans-serif" font-size="{size}" font-weight="{weight}">{html.escape(value)}</text>'
+def save(name, width, height, body, title, viewbox=None):
+    (HERE / name).write_text(svg(width, height, body, title, viewbox), encoding="utf-8", newline="\n")
 
-def lockup(bg, fg):
-    return f'<rect width="860" height="230" fill="{bg}"/>' + icon(48, 34, 1.28, fg) + wordmark(243, 59, 1.58, fg) + text(242, 190, "Workspace tools. On your terms.", 20, fg)
+
+def group(body, x=0, y=0, scale=1):
+    return f'<g transform="translate({x} {y}) scale({scale})">{body}</g>'
+
+
+def rect(x, y, width, height, fill, radius=0, stroke=None):
+    edge = f' stroke="{stroke}" stroke-width="1.5"' if stroke else ""
+    return f'<rect x="{x}" y="{y}" width="{width}" height="{height}" rx="{radius}" fill="{fill}"{edge}/>'
+
+
+def text(x, y, content, size=24, color=INK, weight=400, utility=False):
+    family = "Consolas,DejaVu Sans Mono,monospace" if utility else "Segoe UI,DejaVu Sans,sans-serif"
+    return f'<text x="{x}" y="{y}" font-family="{family}" font-size="{size}" font-weight="{weight}" fill="{color}">{html.escape(content)}</text>'
+
+
+def mark(foreground=INK, accent=LAGOON):
+    # A single 128-unit original: square proportions and an eight-unit joint.
+    half = "M20 108V32C20 25.4 25.4 20 32 20H35L60 47V77L40 56V108Z"
+    return f'<path d="{half}" fill="{foreground}"/><path d="{half}" transform="translate(128 0) scale(-1 1)" fill="{accent}"/>'
+
+
+def wordmark(color=INK):
+    # Original geometric glyphs. No typeface is embedded or outlined.
+    glyphs = [
+        "M5 80V35C5 24 12 18 24 18C36 18 43 25 43 36V80M43 36C43 25 50 18 62 18C74 18 81 25 81 36V80",
+        "M158 49C158 31 147 18 131 18C114 18 103 31 103 49C103 67 114 80 131 80C147 80 158 67 158 49M158 18V80",
+        "M192 80V19C192 6 199 0 212 0H218M177 30H216",
+        "M270 25C257 14 233 16 230 31C225 53 270 44 270 64C270 83 240 87 228 74",
+        "M292 32V80",
+        "M324 0V64C324 76 329 80 342 80",
+    ]
+    paths = "".join(f'<path d="{d}"/>' for d in glyphs)
+    return f'<g fill="none" stroke="{color}" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">{paths}</g><circle cx="292" cy="9" r="5.2" fill="{color}"/>'
+
+
+def lockup(dark=False):
+    foreground, accent = (MIST, FOAM) if dark else (INK, LAGOON)
+    return group(mark(foreground, accent), 8, 4, 1.9) + group(wordmark(foreground), 274, 45, 2)
+
+
+def badge(dark=False, size=128):
+    background, foreground, accent, border = (INK, MIST, FOAM, SLATE) if dark else (MIST, INK, LAGOON, SLATE)
+    if size in (16, 24):
+        # Optical small-size cut: the same structure, with a visible center gap.
+        scale = size / 16
+        left = "M3 13V4Q3 3 4 3H5L7.5 5.5V8.5L5 6V13Z"
+        body = rect(.5, .5, size-1, size-1, background, 3.5*scale, border)
+        body += group(f'<path d="{left}" fill="{foreground}"/><path d="{left}" transform="translate(16 0) scale(-1 1)" fill="{accent}"/>', scale=scale)
+        return body
+    return rect(1, 1, 126, 126, background, 28, border) + mark(foreground, accent)
+
 
 def social():
-    return f'<rect width="1280" height="640" fill="{INK}"/><path d="M1000 0v640M0 496h1280" stroke="#35464b"/>' + icon(55, 52, 1.2, PAPER) + wordmark(242, 76, 1.65, PAPER) + text(76, 315, "Your agent.", 68, PAPER, 600) + text(76, 394, "Your workspace.", 68, PAPER, 600) + text(80, 553, "MCP tools for Windows + Linux", 26, PAPER) + text(80, 592, "Read only by default. Capabilities you choose.", 19, "#aab8b6") + icon(977, 207, 2.0, PAPER)
+    body = rect(0, 0, 1280, 640, MIST)
+    # A joining tab makes the product's connection visible without extra symbols.
+    body += '<path d="M878 0H1280V640H930C886 640 850 604 850 560V346H820V294H850V0Z" fill="'+INK+'"/>'
+    body += group(lockup(), 40, 30, .59)
+    body += text(70, 303, "Your workspace.", 68, INK, 650)
+    body += text(70, 388, "Connected.", 68, LAGOON, 650)
+    body += text(73, 514, "MCP tools for Windows + Linux", 28, INK, 500)
+    body += text(73, 559, "Read only by default. You choose the capabilities.", 23, SLATE)
+    body += group(mark(MIST, FOAM), 846, 154, 3.3)
+    return body
+
+
+def arrow(points, color=LAGOON):
+    coords = points.split()
+    x, y = map(float, coords[-1].split(","))
+    px, py = map(float, coords[-2].split(","))
+    head = f"M{x-7},{y-8}L{x},{y}L{x+7},{y-8}" if y > py else f"M{x-8},{y-7}L{x},{y}L{x-8},{y+7}"
+    return f'<polyline points="{points}" fill="none" stroke="{color}" stroke-width="3" stroke-linejoin="round"/><path d="{head}" fill="none" stroke="{color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>'
+
+
+def architecture(mobile=False):
+    if mobile:
+        body = rect(0, 0, 400, 900, MIST, 24)
+        body += text(32, 48, "One connection.", 29, INK, 650)
+        body += text(32, 83, "Explicit capabilities.", 29, INK, 650)
+        body += rect(32, 122, 336, 108, WHITE, 18, LINE)
+        body += text(56, 164, "MCP client", 28, INK, 600) + text(56, 202, "Local stdio connection", 21, SLATE)
+        body += arrow("200,232 200,269")
+        body += rect(32, 274, 336, 134, INK, 18)
+        body += group(mark(MIST, FOAM), 48, 286, .55) + group(wordmark(MIST), 133, 299, .57)
+        body += text(59, 383, "Read only by default", 21, MIST)
+        body += '<path d="M200 408V430H20V703" fill="none" stroke="'+LAGOON+'" stroke-width="3"/>'
+        body += arrow("20,513 43,513") + arrow("20,703 43,703")
+        for y, title, line1, line2 in ((445, "Workspace files", "Read and inspect", "Enable precise edits"), (635, "Commands + terminals", "Explicitly enabled", "Uses account permissions")):
+            body += rect(48, y, 320, 146, WHITE, 18, LINE)
+            body += text(69, y+42, title, 24, INK, 600)
+            body += text(69, y+82, line1, 20, SLATE) + text(69, y+113, line2, 20, SLATE)
+        body += text(32, 838, "File tools stay in your workspace.", 20, SLATE)
+        return body
+    body = rect(0, 0, 1280, 480, MIST, 24)
+    body += text(44, 64, "One connection. Explicit capabilities.", 36, INK, 650)
+    body += rect(44, 178, 270, 156, WHITE, 20, LINE)
+    body += text(69, 237, "MCP client", 32, INK, 600) + text(69, 285, "Local stdio connection", 22, SLATE)
+    body += arrow("316,256 387,256")
+    body += rect(393, 178, 304, 156, INK, 20)
+    body += group(mark(MIST, FOAM), 416, 188, .6) + group(wordmark(MIST), 510, 205, .45)
+    body += text(419, 292, "Read only by default", 23, MIST)
+    body += '<path d="M699 256H755V168M755 256V339" fill="none" stroke="'+LAGOON+'" stroke-width="3"/>'
+    body += arrow("755,168 807,168") + arrow("755,339 807,339")
+    for y, title, sub in ((103, "Workspace files", "Read, inspect, enable precise edits"), (275, "Commands + terminals", "Explicitly enabled")):
+        body += rect(815, y, 421, 132, WHITE, 20, LINE)
+        body += text(843, y+51, title, 29, INK, 600) + text(843, y+93, sub, 22, SLATE)
+    body += text(44, 448, "File tools stay in the workspace. Enabled commands use account permissions.", 23, SLATE)
+    return body
+
 
 def main():
-    (HERE / "logo-light.svg").write_text(svg(860,230,lockup(PAPER,INK),"Mafsil — Workspace tools. On your terms."),encoding="utf-8",newline="\n")
-    (HERE / "logo-dark.svg").write_text(svg(860,230,lockup(INK,PAPER),"Mafsil — dark identity"),encoding="utf-8",newline="\n")
-    for name,fg,ac in (("icon",INK,ACCENT),("icon-dark",PAPER,ACCENT),("icon-mono",INK,INK)):
-        (HERE / f"{name}.svg").write_text(svg(128,128,icon(color=fg,accent=ac),"Mafsil icon"),encoding="utf-8",newline="\n")
-    (HERE / "social.svg").write_text(svg(1280,640,social(),"Mafsil — Your agent. Your workspace."),encoding="utf-8",newline="\n")
-    body=f'<rect width="1600" height="1430" fill="{PAPER}"/>'
-    body+=text(70,75,"MAFSIL  /  IDENTITY PROPOSAL",21,MUTED,600)+text(70,145,"A clear connection. A deliberate boundary.",44,INK,600)
-    body+=f'<g transform="translate(55 205) scale(.84)">{lockup(PAPER,INK)}</g>'
-    body+=f'<g transform="translate(817 205) scale(.84)">{lockup(INK,PAPER)}</g>'
-    body+=text(70,445,"01  PRIMARY / LIGHT",16,MUTED)+text(832,445,"02  PRIMARY / DARK",16,MUTED)
-    body+=icon(70,484,1.05)+icon(237,484,1.05,INK,INK)
-    body+=text(425,520,"03  STANDALONE / SCALE",16,MUTED)
-    for x,size in ((428,16),(505,24),(594,32),(697,48),(814,64)):
-        body+=icon(x,551,size/128)+text(x,653,str(size)+" px",14,MUTED)
-    for x,color,label in ((1055,INK,"INK"),(1210,ACCENT,"EMBER"),(1365,"#dfded5","PAPER")):
-        body+=f'<rect x="{x}" y="520" width="110" height="84" rx="8" fill="{color}"/>'+text(x,637,label,14,MUTED)
-    body+=text(70,720,"04  SOCIAL PREVIEW / 1280 × 640",16,MUTED)
-    body+=f'<g transform="translate(70 755) scale(.93)">{social()}</g>'
-    body+=text(1308,815,"SOURCE",15,MUTED,600)+text(1308,850,"Editable SVG",17,INK)+text(1308,900,"Original glyphs",17,INK)+text(1308,950,"No font bundle",17,INK)
-    body+=text(70,1393,"MAFSIL   /   Original vector identity   /   MIT",16,MUTED)
-    (HERE / "preview.svg").write_text(svg(1600,1430,body,"Mafsil identity review: light and dark logos, icon sizes, palette and social preview"),encoding="utf-8",newline="\n")
-    architecture=f'<rect width="1100" height="410" rx="12" fill="{PAPER}"/>'
-    architecture+=text(40,53,"Small surface. Clear capabilities.",28,INK,600)
-    for x,y,w,h,title,sub in ((40,128,235,150,"MCP client","Local stdio connection"),(369,128,296,150,"Mafsil","Read only by default"),(765,87,295,99,"Workspace files","Conditional, precise edits"),(765,228,295,99,"Processes + terminals","Explicitly enabled")):
-        architecture+=f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="6" fill="{INK if title=="Mafsil" else "#e8e8df"}"/>'
-        architecture+=text(x+22,y+42,title,25,PAPER if title=="Mafsil" else INK,600)+text(x+22,y+75,sub,16,PAPER if title=="Mafsil" else MUTED)
-    architecture+='<path d="M278 202h86m-10-7l10 7-10 7M670 202h43V136h47m-10-7l10 7-10 7M713 202v75h47m-10-7l10 7-10 7" fill="none" stroke="'+ACCENT+'" stroke-width="3"/>'
-    architecture+=text(41,364,"File tools stay within your workspace. Commands run with your account’s authority.",18,MUTED)
-    (HERE.parent / "architecture.svg").write_text(svg(1100,410,architecture,"Mafsil architecture and capability boundaries"),encoding="utf-8",newline="\n")
+    save("mark-master.svg", 1024, 1024, mark(), "Mafsil original articulated M mark", "0 0 128 128")
+    save("logo-master.svg", 2048, 512, lockup(), "Mafsil original vector logo", "0 0 1024 256")
+    for dark in (False, True):
+        name = "dark" if dark else "light"
+        save(f"logo-{name}.svg", 1024, 256, lockup(dark), f"Mafsil logo for {name} backgrounds")
+        save("icon-dark.svg" if dark else "icon.svg", 128, 128, badge(dark), f"Mafsil app icon, {name}")
+    save("icon-mono.svg", 128, 128, mark(INK, INK), "Mafsil monochrome mark")
+    for size in (16, 24):
+        save(f"icon-{size}.svg", size, size, badge(size=size), f"Mafsil optical {size}-pixel app icon")
+    save("social.svg", 1280, 640, social(), "Mafsil — Your workspace. Connected.")
+    save("../architecture.svg", 1280, 480, architecture(), "Mafsil: MCP client connects to files and explicitly enabled command tools")
+    save("../architecture-mobile.svg", 400, 900, architecture(True), "Mafsil capabilities, arranged for small screens")
+
 
 if __name__ == "__main__":
     main()

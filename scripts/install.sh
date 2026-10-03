@@ -37,8 +37,8 @@ destination=$(realpath -m -- "$destination")
 [ "$destination" != / ] || fail 'A filesystem root cannot be an installation directory.'
 parent=$(dirname -- "$destination")
 marker=mafsil.install
-managed='mafsil LICENSE THIRD_PARTY_NOTICES.txt install.sh'
-owned='mafsil LICENSE THIRD_PARTY_NOTICES.txt install.sh mafsil.install'
+managed='mafsil LICENSE THIRD_PARTY_NOTICES.md install.sh'
+owned='mafsil LICENSE THIRD_PARTY_NOTICES.md install.sh mafsil.install'
 has_record=0
 read_record() {
     has_record=0
@@ -120,7 +120,7 @@ backup=$stage/previous
 mkdir -- "$backup"
 if [ "$action" = install ]; then
     asset=mafsil_${version}_linux_${arch}
-    for name in "$asset" SHA256SUMS LICENSE THIRD_PARTY_NOTICES.txt install.sh; do
+    for name in "$asset" SHA256SUMS LICENSE THIRD_PARTY_NOTICES.md install.sh; do
         if [ -n "$bundle" ]; then
             assert_path "$bundle/$name"
             cp -- "$bundle/$name" "$stage/$name"
@@ -131,14 +131,14 @@ if [ "$action" = install ]; then
     done
     [ "$(wc -c < "$stage/SHA256SUMS")" -le 65536 ] || fail 'Checksum manifest is too large.'
     LC_ALL=C awk 'NF != 2 || length($1) != 64 || $1 ~ /[^0-9a-fA-F]/ || $2 ~ /[^A-Za-z0-9_.-]/ || seen[$2]++ { exit 1 }' "$stage/SHA256SUMS" || fail 'Malformed or duplicate checksum manifest entry.'
-    for name in "$asset" LICENSE THIRD_PARTY_NOTICES.txt install.sh; do
+    for name in "$asset" LICENSE THIRD_PARTY_NOTICES.md install.sh; do
         digest=$(sha256sum -- "$stage/$name"); digest=${digest%% *}
         [ "$(LC_ALL=C grep -Fxc "$digest  $name" "$stage/SHA256SUMS")" -eq 1 ] || fail "Checksum mismatch: $name"
         if [ "$name" = "$asset" ] && [ -n "$expected" ]; then [ "$expected" = "$digest" ] || fail 'Binary digest differs from --sha256.'; fi
     done
     mv -- "$stage/$asset" "$stage/mafsil"
     chmod 0755 "$stage/mafsil" "$stage/install.sh"
-    chmod 0644 "$stage/LICENSE" "$stage/THIRD_PARTY_NOTICES.txt"
+    chmod 0644 "$stage/LICENSE" "$stage/THIRD_PARTY_NOTICES.md"
     banner=$(timeout 10 "$stage/mafsil" version) || fail 'Candidate failed version check.'
     case "$banner" in "Mafsil ${version#v} ("*) :;; *) fail 'Candidate version differs from requested release.';; esac
     {

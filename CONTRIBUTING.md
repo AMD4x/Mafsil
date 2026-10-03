@@ -34,6 +34,6 @@ For dependencies, update pinned versions deliberately, run `go mod tidy`, regene
 
 Changes to file or process behavior need focused regression tests for failure paths as well as success. Preserve byte-level file semantics, process ownership, bounded resources and truthful errors. Do not add a convenience bypass that silently expands authority. Describe platform differences explicitly.
 
-Brand geometry lives in `assets/brand/generate.py` and editable SVGs; no font files are bundled. Maintain light/dark contrast and test the icon at 16–64 pixels. PNG and ICO exports are intentional distribution assets.
+Brand geometry lives in `assets/brand/generate.py` and editable SVG masters; `assets/brand/render.cjs` exports high-resolution PNGs and optical ICO frames. See the [asset guide](assets/brand/README.md). Maintain light/dark contrast, check the real 16–64 px icon frames, and inspect both diagram layouts. No font files are bundled. PNG and ICO exports are intentional distribution assets.
 
 Publication and release are separate maintainer decisions. The [release runbook](docs/releasing.md) documents exact-commit validation and the manual release gate.

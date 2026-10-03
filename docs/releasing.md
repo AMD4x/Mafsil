@@ -32,7 +32,7 @@ Expected v0.1.0 assets:
 - `mafsil_v0.1.0_linux_amd64`
 - `mafsil_v0.1.0_linux_arm64`
 - `install.ps1`, `install.sh`
-- `LICENSE`, `THIRD_PARTY_NOTICES.txt`
+- `LICENSE`, `THIRD_PARTY_NOTICES.md`
 - `BUILD-INFO_windows_amd64.json`
 - `BUILD-INFO_linux_amd64.json`
 - `BUILD-INFO_linux_arm64.json`

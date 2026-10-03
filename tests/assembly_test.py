@@ -22,7 +22,7 @@ class AssemblyTests(unittest.TestCase):
         for target in TARGETS:
             folder = self.inputs / ("candidate-" + target)
             folder.mkdir(parents=True)
-            for name in ("LICENSE", "THIRD_PARTY_NOTICES.txt", "install.ps1", "install.sh", "DEPENDENCIES.json"):
+            for name in ("LICENSE", "THIRD_PARTY_NOTICES.md", "install.ps1", "install.sh", "DEPENDENCIES.json"):
                 (folder / name).write_bytes(b"shared fixture")
             binary = "mafsil_v0.1.0_" + target + (".exe" if target.startswith("windows") else "")
             (folder / binary).write_bytes(b"fixture binary " + target.encode())

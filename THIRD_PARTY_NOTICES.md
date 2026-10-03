@@ -1,9 +1,11 @@
-Mafsil third-party notices
+# Third-party notices
 
 Mafsil's original code and brand assets are MIT licensed.
 Third-party code retains its own licenses. No bundled font files.
 
-Go standard library/runtime
+## Go standard library/runtime
+
+```text
 Copyright 2009 The Go Authors.
 
 Redistribution and use in source and binary forms, with or without
@@ -31,13 +33,13 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
 
+## github.com/google/jsonschema-go v0.4.3
 
-========================================================================
+[Upstream source](https://github.com/google/jsonschema-go)
 
-github.com/google/jsonschema-go v0.4.3
-https://github.com/google/jsonschema-go
-
+```text
 MIT License
 
 Copyright (c) 2025 JSON Schema Go Project Authors
@@ -59,13 +61,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+```
 
+## github.com/modelcontextprotocol/go-sdk v1.8.0
 
-========================================================================
+[Upstream source](https://github.com/modelcontextprotocol/go-sdk)
 
-github.com/modelcontextprotocol/go-sdk v1.8.0
-https://github.com/modelcontextprotocol/go-sdk
-
+```text
 The MCP project is undergoing a licensing transition from the MIT License to the Apache License, Version 2.0 ("Apache-2.0"). All new code and specification contributions to the project are licensed under Apache-2.0. Documentation contributions (excluding specifications) are licensed under CC-BY-4.0.
 
 Contributions for which relicensing consent has been obtained are licensed under Apache-2.0. Contributions made by authors who originally licensed their work under the MIT License and who have not yet granted explicit permission to relicense remain licensed under the MIT License.
@@ -282,13 +284,13 @@ Creative Commons Attribution 4.0 International (CC-BY-4.0)
 Documentation in this project (excluding specifications) is licensed under
 CC-BY-4.0. See https://creativecommons.org/licenses/by/4.0/legalcode for
 the full license text.
+```
 
+## github.com/segmentio/asm v1.1.3
 
-========================================================================
+[Upstream source](https://github.com/segmentio/asm)
 
-github.com/segmentio/asm v1.1.3
-https://github.com/segmentio/asm
-
+```text
 MIT License
 
 Copyright (c) 2021 Segment
@@ -310,13 +312,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+```
 
+## github.com/segmentio/encoding v0.5.4
 
-========================================================================
+[Upstream source](https://github.com/segmentio/encoding)
 
-github.com/segmentio/encoding v0.5.4
-https://github.com/segmentio/encoding
-
+```text
 MIT License
 
 Copyright (c) 2019 Segment.io, Inc.
@@ -338,13 +340,13 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+```
 
+## github.com/yosida95/uritemplate/v3 v3.0.2
 
-========================================================================
+[Upstream source](https://github.com/yosida95/uritemplate/v3)
 
-github.com/yosida95/uritemplate/v3 v3.0.2
-https://github.com/yosida95/uritemplate/v3
-
+```text
 Copyright (C) 2016, Kohei YOSHIDA <https://yosida95.com/>. All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -370,13 +372,13 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
 
+## golang.org/x/oauth2 v0.35.0
 
-========================================================================
+[Upstream source](https://golang.org/x/oauth2)
 
-golang.org/x/oauth2 v0.35.0
-https://golang.org/x/oauth2
-
+```text
 Copyright 2009 The Go Authors.
 
 Redistribution and use in source and binary forms, with or without
@@ -404,13 +406,13 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
 
+## golang.org/x/sync v0.20.0
 
-========================================================================
+[Upstream source](https://golang.org/x/sync)
 
-golang.org/x/sync v0.20.0
-https://golang.org/x/sync
-
+```text
 Copyright 2009 The Go Authors.
 
 Redistribution and use in source and binary forms, with or without
@@ -438,13 +440,13 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
 
+## golang.org/x/sys v0.48.0
 
-========================================================================
+[Upstream source](https://golang.org/x/sys)
 
-golang.org/x/sys v0.48.0
-https://golang.org/x/sys
-
+```text
 Copyright 2009 The Go Authors.
 
 Redistribution and use in source and binary forms, with or without
@@ -472,13 +474,13 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
 
+## golang.org/x/time v0.15.0
 
-========================================================================
+[Upstream source](https://golang.org/x/time)
 
-golang.org/x/time v0.15.0
-https://golang.org/x/time
-
+```text
 Copyright 2009 The Go Authors.
 
 Redistribution and use in source and binary forms, with or without
@@ -506,3 +508,4 @@ DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```

@@ -8,7 +8,7 @@ import re
 import shutil
 
 TARGETS = ("windows_amd64", "linux_amd64", "linux_arm64")
-COMMON = {"LICENSE", "THIRD_PARTY_NOTICES.txt", "install.ps1", "install.sh", "DEPENDENCIES.json"}
+COMMON = {"LICENSE", "THIRD_PARTY_NOTICES.md", "install.ps1", "install.sh", "DEPENDENCIES.json"}
 
 def digest(path):
     with path.open("rb") as stream:

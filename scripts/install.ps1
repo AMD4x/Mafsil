@@ -21,7 +21,7 @@ $destinationFull = [IO.Path]::GetFullPath($Destination).TrimEnd('\', '/')
 if ($destinationFull -eq [IO.Path]::GetPathRoot($destinationFull).TrimEnd('\', '/') -or $destinationFull.StartsWith('\\')) { throw 'Use a local directory below a drive root.' }
 $parent = [IO.Path]::GetDirectoryName($destinationFull)
 $markerName = 'mafsil.install.json'
-$managed = @('mafsil.exe', 'LICENSE', 'THIRD_PARTY_NOTICES.txt', 'install.ps1')
+$managed = @('mafsil.exe', 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'install.ps1')
 
 function Assert-NoReparse([string]$Path) {
     $itemPath = [IO.Path]::GetFullPath($Path)
@@ -124,7 +124,7 @@ try {
     [IO.Directory]::CreateDirectory($backup) | Out-Null
     if ($Action -eq 'Install') {
         $asset = "mafsil_${Version}_windows_amd64.exe"
-        $downloadNames = @($asset, 'SHA256SUMS', 'LICENSE', 'THIRD_PARTY_NOTICES.txt', 'install.ps1')
+        $downloadNames = @($asset, 'SHA256SUMS', 'LICENSE', 'THIRD_PARTY_NOTICES.md', 'install.ps1')
         foreach ($name in $downloadNames) {
             $path = Join-Path $stage $name
             if ($BundleDirectory) {

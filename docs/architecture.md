@@ -2,7 +2,10 @@
 
 Mafsil is a local MCP server built around nine composable primitives. The configured workspace and capability flags belong to the operator. Agents cannot widen them through tool arguments or MCP roots.
 
-![Data flow](../assets/architecture.svg)
+<picture>
+  <source media="(max-width: 600px)" srcset="../assets/architecture-mobile.svg">
+  <img src="../assets/architecture.svg" alt="MCP client, Mafsil, workspace files and explicitly enabled command tools" width="100%">
+</picture>
 
 ## Protocol and lifecycle
 
