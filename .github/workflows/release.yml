@@ -143,7 +143,7 @@ jobs:
       - name: Download release assets
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release download "$TAG" --dir "${{ runner.temp }}/published-mafsil"
+        run: gh release download "${{ needs.verify.outputs.tag }}" --dir "${{ runner.temp }}/published-mafsil"
       - name: Check published binaries and stdio
         run: python tests/distribution_test.py --bundle "${{ runner.temp }}/published-mafsil"
       - name: Exercise actual HTTPS install, update and uninstall
