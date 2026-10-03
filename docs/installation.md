@@ -1,6 +1,6 @@
 # Install, update and remove
 
-**The commands below become available after the first approved GitHub release.** There are no working v0.1.0 download assets before that release. Until then, follow the source build in the [README](../README.md).
+Install **v0.1.0** from the [official release](https://github.com/AMD4x/Mafsil/releases/tag/v0.1.0). The commands below pin that version; use an explicit published version when updating.
 
 Release users need no Go toolchain. Windows requires PowerShell 7 to run the installer; command tools also use it by default. Linux requires the usual GNU userland (`sh`, `curl`, `sha256sum`, `stat`, `realpath`, `timeout`, `awk`, `grep` and coreutils). Bash is needed only for shell command/session tools.
 
@@ -70,4 +70,4 @@ Power loss or forced process termination can leave `.mafsil-install-*` staging/b
 
 Place the appropriate raw binary, `SHA256SUMS`, `LICENSE`, `THIRD_PARTY_NOTICES.md`, and platform installer in a local directory. Pass `-BundleDirectory DIR` on Windows or `--bundle DIR` on Linux. The same integrity checks apply and no download occurs.
 
-Development tests use only this offline mode with explicit temporary destinations. Native Windows amd64 and Linux amd64/arm64 installer fixtures have passed in CI; see [validation status](validation.md). Actual release-download installation will be tested after the first approved release exists.
+Development tests use only this offline mode with explicit temporary destinations. Native Windows amd64 and Linux amd64/arm64 installer fixtures have passed in CI; see [validation status](validation.md). Actual HTTPS release-download installation, idempotent update and uninstall have also passed on all three targets in the approved release workflow.

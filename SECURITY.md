@@ -1,6 +1,6 @@
 # Security policy
 
-Before the first release, only the development tree exists. After release, security fixes target the latest published version. A report about an older version is welcome if the issue still applies.
+Security fixes target the latest published version. A report about an older version is welcome if the issue still applies.
 
 Use [Security → Report a vulnerability](https://github.com/AMD4x/Mafsil/security/advisories/new) to send a private report. Private vulnerability reporting is enabled for this repository. Do not open a public issue containing exploit details, private files, keys or identifiers. If that private channel is unavailable, contact the maintainer through an existing private channel before sending sensitive material; this project does not claim a monitored security email address.
 

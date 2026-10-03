@@ -16,7 +16,7 @@ Mafsil connects an MCP-compatible agent to a workspace on Windows or Linux. Read
 
 **Read only by default.** You choose the workspace and separately enable file changes and command execution. Mafsil runs as a local stdio process, needs no inbound network port, and starts no background service.
 
-> **Before the first release:** this repository is prepared for v0.1.0. Release downloads and bootstrap URLs become available only after the first approved release. Use a source build today. Native CI has passed on Windows amd64, Linux amd64 and Linux arm64, including race checks, packaged binaries and installer fixtures. See [validation status](docs/validation.md).
+> **Mafsil v0.1.0 is available for Windows x64, Linux x64 and Linux ARM64.** [Download the release](https://github.com/AMD4x/Mafsil/releases/tag/v0.1.0) or use the installers below. Native CI validates all three targets; see [validation status](docs/validation.md).
 
 ## What it does
 
@@ -35,27 +35,33 @@ The name comes from the Arabic **مَفْصِل**, a point where two parts conne
 
 ## Get started
 
-### Build from source
+### Install
 
-Go **1.27.0 or later** is needed to build, not to use a release binary. Windows shell execution uses PowerShell 7; Linux shell execution uses Bash. File tools do not require a shell.
+Runtime binaries need no Go toolchain. Windows installation requires PowerShell 7. Linux installation uses the standard GNU utilities listed in the [installation guide](docs/installation.md).
 
-Windows, from the source directory:
+**Windows — PowerShell 7**
 
 ```powershell
-go build -trimpath -o ..\mafsil-build\mafsil.exe .\cmd\mafsil
-& ..\mafsil-build\mafsil.exe init --workspace 'D:\Projects\demo' --output .\mafsil.local.json
-& ..\mafsil-build\mafsil.exe doctor --config .\mafsil.local.json
+Invoke-WebRequest 'https://github.com/AMD4x/Mafsil/releases/download/v0.1.0/install.ps1' -OutFile .\install.ps1
+pwsh -NoProfile -File .\install.ps1 -Version v0.1.0
+$MafsilDir = Join-Path $env:LOCALAPPDATA 'Programs\Mafsil'
+& "$MafsilDir\mafsil.exe" init --workspace 'D:\Projects\demo' --output .\mafsil.local.json
+& "$MafsilDir\mafsil.exe" doctor --config .\mafsil.local.json
 ```
 
-Linux:
+**Linux — x64 / ARM64**
 
 ```sh
-go build -trimpath -o ../mafsil-build/mafsil ./cmd/mafsil
-../mafsil-build/mafsil init --workspace /path/to/workspace --output ./mafsil.local.json
-../mafsil-build/mafsil doctor --config ./mafsil.local.json
+curl --proto '=https' --proto-redir '=https' -fL \
+  https://github.com/AMD4x/Mafsil/releases/download/v0.1.0/install.sh -o install.sh
+sh install.sh --version v0.1.0
+"$HOME/.local/share/mafsil/mafsil" init --workspace /path/to/workspace --output ./mafsil.local.json
+"$HOME/.local/share/mafsil/mafsil" doctor --config ./mafsil.local.json
 ```
 
-Replace the workspace with an existing directory you intend to expose. `init` never overwrites an existing configuration. `doctor` checks local configuration and required shell availability; it does not make network calls or execute a command.
+Replace the workspace with an existing directory you intend to expose. `init` never overwrites an existing configuration. `doctor` checks local configuration and shell availability without making network calls or running commands. Keep the configuration outside directories agents may edit.
+
+Installers verify SHA-256 and print the executable path. They require no administrator/root elevation and make no persistent PATH or service changes. For updates, custom directories, offline bundles and removal, see the [installation guide](docs/installation.md). To compile instead, [build from source](#build-from-source).
 
 ### Connect an MCP client
 
@@ -119,7 +125,7 @@ See [tool contracts and examples](docs/tools.md) and [configuration](docs/config
 
 ## Installation and updates
 
-After the first approved release, the [terminal installers](docs/installation.md) download the correct binary and verify its SHA-256. They run without administrator/root elevation, preserve configurations and unrelated files, and roll back ordinary update failures. Re-running the installer updates the managed files. The same script provides status and uninstall commands.
+The [terminal installers](docs/installation.md) download the correct binary and verify its SHA-256. They run without administrator/root elevation, preserve configurations and unrelated files, and roll back ordinary update failures. Re-running the installer updates the managed files. The same script provides status and uninstall commands.
 
 There is no automatic update, service registration, persistent PATH edit, or startup integration. Release binaries carry Windows version/icon resources and are distributed separately for Windows amd64, Linux amd64 and Linux arm64.
 
@@ -142,6 +148,30 @@ Read the [threat model](docs/security.md) before enabling execution. Report vuln
 For vulnerabilities, use [private security reporting](https://github.com/AMD4x/Mafsil/security/advisories/new) instead of a public issue. See [SECURITY.md](SECURITY.md) for the reporting scope.
 
 ## Development
+
+### Build from source
+
+Go **1.27.0 or later** is needed to build, not to use a release binary. Windows shell execution uses PowerShell 7; Linux shell execution uses Bash. File tools do not require a shell.
+
+Windows, from the source directory:
+
+```powershell
+go build -trimpath -o ..\mafsil-build\mafsil.exe .\cmd\mafsil
+& ..\mafsil-build\mafsil.exe init --workspace 'D:\Projects\demo' --output .\mafsil.local.json
+& ..\mafsil-build\mafsil.exe doctor --config .\mafsil.local.json
+```
+
+Linux:
+
+```sh
+go build -trimpath -o ../mafsil-build/mafsil ./cmd/mafsil
+../mafsil-build/mafsil init --workspace /path/to/workspace --output ./mafsil.local.json
+../mafsil-build/mafsil doctor --config ./mafsil.local.json
+```
+
+Replace the workspace with an existing directory you intend to expose. `init` never overwrites an existing configuration. `doctor` checks local configuration and required shell availability; it does not make network calls or execute a command.
+
+### Verify changes
 
 ```sh
 python scripts/verify.py --security
