@@ -44,7 +44,7 @@ func Open(path string, maxFile int, writable bool) (*Workspace, error) {
 			break
 		}
 	}
-	r, err := os.OpenRoot(path)
+	r, err := os.OpenRoot(directoryName(path))
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +105,7 @@ func (w *Workspace) Directory(name string) (string, error) {
 	if err = w.check(n); err != nil {
 		return "", err
 	}
-	f, err := w.root.OpenRoot(n)
+	f, err := w.root.OpenRoot(directoryName(n))
 	if err != nil {
 		return "", err
 	}
@@ -214,7 +214,7 @@ func (w *Workspace) ListPage(ctx context.Context, name string, offset, limit int
 	}
 	// Open as a directory first: opening a FIFO as an ordinary file can block
 	// before ReadDir has a chance to reject it. Retain the pinned directory.
-	directory, e := w.root.OpenRoot(n)
+	directory, e := w.root.OpenRoot(directoryName(n))
 	if e != nil {
 		return out, e
 	}
@@ -281,7 +281,7 @@ func (w *Workspace) Mkdir(ctx context.Context, name string) error {
 	if e = w.check(p); e != nil {
 		return e
 	}
-	r, e := w.root.OpenRoot(p)
+	r, e := w.root.OpenRoot(directoryName(p))
 	if e != nil {
 		return e
 	}

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime"
 	"syscall"
 	"unsafe"
 
@@ -12,7 +13,8 @@ import (
 
 var reopenFile = windows.NewLazySystemDLL("kernel32.dll").NewProc("ReOpenFile")
 
-func readFlags() int { return os.O_RDONLY }
+func readFlags() int                   { return os.O_RDONLY }
+func directoryName(name string) string { return name }
 func unsafeLink(fi os.FileInfo) bool {
 	a, ok := fi.Sys().(*syscall.Win32FileAttributeData)
 	return fi.Mode()&os.ModeSymlink != 0 || (ok && a.FileAttributes&windows.FILE_ATTRIBUTE_REPARSE_POINT != 0)
@@ -33,6 +35,23 @@ func reopen(f *os.File, access uint32) (windows.Handle, error) {
 		return 0, e
 	}
 	return windows.Handle(h), nil
+}
+func defaultOwner(token windows.Token) (*windows.SID, error) {
+	var size uint32
+	if e := windows.GetTokenInformation(token, windows.TokenOwner, nil, 0, &size); e != windows.ERROR_INSUFFICIENT_BUFFER {
+		return nil, fmt.Errorf("query default owner size: %v", e)
+	}
+	if size < uint32(unsafe.Sizeof(uintptr(0))) || size > 1024 {
+		return nil, errors.New("unexpected default owner information size")
+	}
+	buffer := make([]byte, size)
+	if e := windows.GetTokenInformation(token, windows.TokenOwner, &buffer[0], size, &size); e != nil {
+		return nil, e
+	}
+	owner := (*struct{ Owner *windows.SID })(unsafe.Pointer(&buffer[0])).Owner
+	copy, e := owner.Copy()
+	runtime.KeepAlive(buffer)
+	return copy, e
 }
 func cloneMetadata(src, dst *os.File, fi os.FileInfo) error {
 	attrs := fi.Sys().(*syscall.Win32FileAttributeData).FileAttributes
@@ -60,12 +79,17 @@ func cloneMetadata(src, dst *os.File, fi os.FileInfo) error {
 	if e != nil {
 		return e
 	}
-	tokenUser, e := windows.GetCurrentProcessToken().GetTokenUser()
+	token := windows.GetCurrentProcessToken()
+	tokenUser, e := token.GetTokenUser()
 	if e != nil {
 		return e
 	}
-	if !owner.Equals(tokenUser.User.Sid) {
-		return errors.New("only files owned by the current user are editable")
+	tokenOwner, e := defaultOwner(token)
+	if e != nil {
+		return e
+	}
+	if !owner.Equals(tokenUser.User.Sid) && !owner.Equals(tokenOwner) {
+		return errors.New("only files owned by the process user or its default owner are editable")
 	}
 	acl, _, e := sd.DACL()
 	if e != nil {
@@ -79,13 +103,32 @@ func cloneMetadata(src, dst *os.File, fi os.FileInfo) error {
 	if e != nil {
 		return fmt.Errorf("open destination security: %w", e)
 	}
-	defer windows.CloseHandle(dh)
+	defer func() { windows.CloseHandle(dh) }()
+	destination, e := windows.GetSecurityInfo(dh, windows.SE_FILE_OBJECT, windows.OWNER_SECURITY_INFORMATION)
+	if e != nil {
+		return e
+	}
+	destinationOwner, _, e := destination.Owner()
+	if e != nil {
+		return e
+	}
 	flags := windows.DACL_SECURITY_INFORMATION | windows.UNPROTECTED_DACL_SECURITY_INFORMATION
 	if control&windows.SE_DACL_PROTECTED != 0 {
 		flags = windows.DACL_SECURITY_INFORMATION | windows.PROTECTED_DACL_SECURITY_INFORMATION
 	}
-	if e := windows.SetSecurityInfo(dh, windows.SE_FILE_OBJECT, windows.SECURITY_INFORMATION(flags), nil, nil, acl, nil); e != nil {
-		return fmt.Errorf("preserve DACL: %w", e)
+	var preserveOwner *windows.SID
+	if !owner.Equals(destinationOwner) {
+		withOwner, e := reopen(dst, windows.WRITE_OWNER|windows.WRITE_DAC|windows.READ_CONTROL)
+		if e != nil {
+			return fmt.Errorf("open destination owner: %w", e)
+		}
+		windows.CloseHandle(dh)
+		dh = withOwner
+		flags |= windows.OWNER_SECURITY_INFORMATION
+		preserveOwner = owner
+	}
+	if e := windows.SetSecurityInfo(dh, windows.SE_FILE_OBJECT, windows.SECURITY_INFORMATION(flags), preserveOwner, nil, acl, nil); e != nil {
+		return fmt.Errorf("preserve owner and DACL: %w", e)
 	}
 	return nil
 }

@@ -50,11 +50,32 @@ func fileDACL(t *testing.T, path string) string {
 		t.Fatal(e)
 	}
 	defer windows.CloseHandle(h)
-	sd, e := windows.GetSecurityInfo(h, windows.SE_FILE_OBJECT, windows.DACL_SECURITY_INFORMATION)
+	sd, e := windows.GetSecurityInfo(h, windows.SE_FILE_OBJECT, windows.DACL_SECURITY_INFORMATION|windows.OWNER_SECURITY_INFORMATION)
 	if e != nil {
 		t.Fatal(e)
 	}
 	return sd.String()
+}
+func TestUserOwnedFileKeepsOwner(t *testing.T) {
+	w := testWorkspace(t, true)
+	create(t, w, "user-owned", "old")
+	p := filepath.Join(w.Path(), "user-owned")
+	user, e := windows.GetCurrentProcessToken().GetTokenUser()
+	if e != nil {
+		t.Fatal(e)
+	}
+	// Elevated runners may create files owned by their default owner group.
+	// Exercise replacement when the source instead belongs to the user SID.
+	if e = windows.SetNamedSecurityInfo(p, windows.SE_FILE_OBJECT, windows.OWNER_SECURITY_INFORMATION, user.User.Sid, nil, nil, nil); e != nil {
+		t.Fatal(e)
+	}
+	before := fileDACL(t, p)
+	if _, e = w.Edit(context.Background(), []Change{{Operation: "write", Path: "user-owned", ExpectedSHA256: Hash([]byte("old")), Content: str("new")}}); e != nil {
+		t.Fatal(e)
+	}
+	if after := fileDACL(t, p); after != before {
+		t.Fatal("replacement changed owner or DACL")
+	}
 }
 func TestDACLAndAlternateStreams(t *testing.T) {
 	w := testWorkspace(t, true)

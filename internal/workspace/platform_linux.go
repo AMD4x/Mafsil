@@ -11,6 +11,11 @@ import (
 
 func readFlags() int                 { return os.O_RDONLY | unix.O_NOFOLLOW | unix.O_NONBLOCK }
 func unsafeLink(fi os.FileInfo) bool { return fi.Mode()&os.ModeSymlink != 0 }
+func directoryName(name string) string {
+	// Keep the final dot: the preceding component must be opened as a
+	// directory, so a FIFO can never block before the type check. Do not Clean.
+	return name + "/."
+}
 func singleLink(f *os.File, fi os.FileInfo) error {
 	if fi.Sys().(*syscall.Stat_t).Nlink != 1 {
 		return errors.New("hard-linked files are not accessible")

@@ -27,6 +27,15 @@ func TestLinksFIFOAndPinnedRoot(t *testing.T) {
 	if _, e := w.List(context.Background(), "fifo", 10); e == nil {
 		t.Fatal("FIFO accepted as directory")
 	}
+	if _, e := w.Directory("fifo"); e == nil {
+		t.Fatal("FIFO accepted as working directory")
+	}
+	if e := w.Mkdir(context.Background(), "fifo/child"); e == nil {
+		t.Fatal("FIFO accepted as directory parent")
+	}
+	if _, e := w.Edit(context.Background(), []Change{{Operation: "write", Path: "fifo/child", ExpectedSHA256: "missing", Content: str("bad")}}); e == nil {
+		t.Fatal("FIFO accepted as edit parent")
+	}
 	if _, e := w.Edit(context.Background(), []Change{{Operation: "write", Path: "link/private", ExpectedSHA256: "missing", Content: str("bad")}}); e == nil {
 		t.Fatal("symlink write")
 	}

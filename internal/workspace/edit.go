@@ -89,7 +89,7 @@ func (w *Workspace) edit(ctx context.Context, changes []Change, hook func(int) e
 		if e = w.check(parent); e != nil {
 			return nil, e
 		}
-		r, e := w.root.OpenRoot(parent)
+		r, e := w.root.OpenRoot(directoryName(parent))
 		if e != nil {
 			return nil, e
 		}

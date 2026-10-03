@@ -3,6 +3,7 @@ package process
 import (
 	"bufio"
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -162,8 +163,15 @@ func TestStdinAndCancellation(t *testing.T) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
 	defer cancel()
-	if _, e = m.IO(ctx, IO{SessionID: x.SessionID, Input: strings.Repeat("x", 65536)}); e == nil {
-		t.Fatal("blocked write ignored cancellation")
+	// Pipe capacity differs by OS. Fill it before expecting a blocked write;
+	// Linux may accept one complete 64 KiB request without blocking.
+	for written := 0; written < 2<<20; written += 65536 {
+		if _, e = m.IO(ctx, IO{SessionID: x.SessionID, Input: strings.Repeat("x", 65536)}); e != nil {
+			break
+		}
+	}
+	if !errors.Is(e, context.DeadlineExceeded) {
+		t.Fatalf("blocked write did not return cancellation: %v", e)
 	}
 	s, _ := m.get(x.SessionID)
 	select {
