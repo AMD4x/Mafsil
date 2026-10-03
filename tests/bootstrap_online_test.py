@@ -35,11 +35,18 @@ def main():
             management = ["sh", str(destination / "install.sh"), "--destination", str(destination)]
         def run(command, **kwargs):
             return subprocess.run(command, env=env, cwd=root, check=True, timeout=240, **kwargs)
-        run(bootstrap)
+        readme = (ROOT / "README.md").read_text(encoding="utf-8")
+        language = "powershell" if WINDOWS else "bash"
+        install = readme.split("### Install or update Mafsil\n", 1)[1].split("### Choose an existing workspace\n", 1)[0]
+        install_code = re.search(r"```" + language + r"\n(.*?)\n```", install, re.S)[1]
+        install_script = root / ("readme-install.ps1" if WINDOWS else "readme-install.sh")
+        install_script.write_text(install_code, encoding="utf-8", newline="\n")
+        # Execute the public one-command example itself. The process-local home
+        # paths point only into this fixture, so its default destination is safe.
+        install_command = ["pwsh", "-NoProfile", "-File", str(install_script)] if WINDOWS else ["bash", str(install_script)]
+        run(install_command)
         try:
-            readme = (ROOT / "README.md").read_text(encoding="utf-8")
             setup = readme.split("### Choose an existing workspace\n", 1)[1].split("### Connect an MCP client\n", 1)[0]
-            language = "powershell" if WINDOWS else "bash"
             code = re.search(r"```" + language + r"\n(.*?)\n```", setup, re.S)[1]
             script = root / ("readme-setup.ps1" if WINDOWS else "readme-setup.sh")
             # The fixture sends UTF-8 bytes to redirected stdin; an interactive

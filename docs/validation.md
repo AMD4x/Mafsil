@@ -1,5 +1,15 @@
 # Validation status
 
+## Installation and workspace setup
+
+The stable root bootstraps and revised workspace setup passed on Windows amd64, Linux amd64 and Linux arm64 in [CI run 37116139950](https://github.com/AMD4x/Mafsil/actions/runs/37116139950), at commit `8e882269f970ca6c1c718d1f4b47539750b17824` on **2026-10-03**. Each native job downloaded the real stable release into a temporary home, ran the README's workspace setup with spaces and Unicode in paths, repeated the update, and verified that configuration, scratch data and workspace files survived update and uninstall.
+
+Bootstrap fixtures also check checksum corruption, duplicate or missing manifest entries, failed network requests, unexpected release destinations, version pinning and prerelease rejection. Linux checks reject a truncated streamed bootstrap before installation starts. Eleven transaction-installer tests include an upgrade from a synthetic older native executable; that fixture is not a previously published release.
+
+The current CI workflow also executes the public one-command installation example directly from README, in addition to its setup commands and the local bootstrap's update path. Real installation defaults are redirected through process-local temporary home/AppData paths on GitHub-hosted runners. No real local user installation is used.
+
+## Published v0.1.0
+
 **Mafsil v0.1.0 was published and verified on 2026-10-03.** Native validation passed in [CI run 37112896496](https://github.com/AMD4x/Mafsil/actions/runs/37112896496), at release source commit `888b97c719ca61f20ee5a4f8219db772ad65d8a2`. All three native jobs and the bounded fuzzing job succeeded. The [approved release run](https://github.com/AMD4x/Mafsil/actions/runs/37113683988) then verified the published assets and passed actual HTTPS installation, idempotent update and uninstall on Windows amd64, Linux amd64 and Linux arm64.
 
 The [public release](https://github.com/AMD4x/Mafsil/releases/tag/v0.1.0) contains the 12 approved assets. The published `SHA256SUMS` file has SHA-256 `058e7ed8c6673b561ab778e30759be6feffdd994a64498f5ea495526f4b081a5`; its entries and GitHub's asset digests match the reviewed CI artifacts. Public installer and checksum URLs were also downloaded without authentication and matched byte-for-byte.
