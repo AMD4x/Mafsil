@@ -1,23 +1,19 @@
-name: Approved release
+name: Release
 
-# Ordinary pushes, tags and pull requests can never publish a release.
+# Releases are published only by manual dispatch.
 on:
   workflow_dispatch:
     inputs:
       source_commit:
-        description: Exact 40-character commit approved for release
+        description: Exact 40-character commit to release
         required: true
         type: string
       ci_run_id:
-        description: Exact successful CI run whose artifacts were reviewed
+        description: Successful CI run for that commit
         required: true
         type: string
       manifest_sha256:
-        description: SHA-256 of the assembled SHA256SUMS file in the approved proposal
-        required: true
-        type: string
-      approval:
-        description: Type publish-v0.1.0 only after the release proposal is approved
+        description: SHA-256 of the assembled SHA256SUMS file
         required: true
         type: string
 
@@ -26,18 +22,23 @@ permissions:
   actions: read
 
 concurrency:
-  group: approved-release
+  group: release
   cancel-in-progress: false
 
 jobs:
   verify:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
     steps:
-      - name: Validate approval and source
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.source_commit }}
+          persist-credentials: false
+      - name: Validate source and manifest inputs
         env:
           SOURCE: ${{ inputs.source_commit }}
-          APPROVAL: ${{ inputs.approval }}
           CI_RUN: ${{ inputs.ci_run_id }}
           MANIFEST: ${{ inputs.manifest_sha256 }}
           WORKFLOW_REF: ${{ github.ref }}
@@ -46,11 +47,21 @@ jobs:
           import os, re
           assert re.fullmatch(r'[a-f0-9]{40}', os.environ['SOURCE']), 'Exact commit SHA required'
           assert re.fullmatch(r'[1-9][0-9]*', os.environ['CI_RUN']), 'Exact CI run ID required'
-          assert re.fullmatch(r'[a-f0-9]{64}', os.environ['MANIFEST']), 'Approved manifest SHA-256 required'
+          assert re.fullmatch(r'[a-f0-9]{64}', os.environ['MANIFEST']), 'Manifest SHA-256 required'
           assert os.environ['WORKFLOW_REF'] == 'refs/heads/main', 'Release must be dispatched from main'
-          assert os.environ['APPROVAL'] == 'publish-v0.1.0', 'Release approval text differs'
           PY
-      - name: Require the reviewed CI run for the approved commit
+      - name: Read release version
+        id: version
+        shell: python
+        run: |
+          import os, pathlib, re
+          version = pathlib.Path("VERSION").read_text(encoding="ascii").strip()
+          assert re.fullmatch(r"\d+\.\d+\.\d+", version), "VERSION must contain MAJOR.MINOR.PATCH"
+          tag = "v" + version
+          assert pathlib.Path("docs/releases", tag + ".md").is_file(), f"Missing release notes for {tag}"
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"tag={tag}\n")
+      - name: Require matching successful CI
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE: ${{ inputs.source_commit }}
@@ -60,22 +71,23 @@ jobs:
           python - <<'PY'
           import json, os, pathlib
           run = json.loads((pathlib.Path(os.environ['RUNNER_TEMP']) / 'ci-run.json').read_text())
-          assert run['id'] == int(os.environ['CI_RUN']), 'CI run differs from approval'
+          assert run['id'] == int(os.environ['CI_RUN']), 'CI run ID differs'
           assert run['path'] == '.github/workflows/ci.yml', 'Unexpected CI workflow'
-          assert run['head_sha'] == os.environ['SOURCE'] and run['head_branch'] == 'main', 'CI source differs from approval'
+          assert run['head_sha'] == os.environ['SOURCE'] and run['head_branch'] == 'main', 'CI source differs'
           assert run['event'] in ('push', 'workflow_dispatch'), 'Unexpected CI event'
-          assert run['status'] == 'completed' and run['conclusion'] == 'success', 'Reviewed CI run has not succeeded'
+          assert run['status'] == 'completed' and run['conclusion'] == 'success', 'CI run has not succeeded'
           PY
 
   publish:
     needs: verify
     runs-on: ubuntu-24.04
     timeout-minutes: 10
-    # Configure required reviewers on this environment before enabling release.
     environment: release
     permissions:
       contents: write
       actions: read
+    env:
+      TAG: ${{ needs.verify.outputs.tag }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -91,28 +103,25 @@ jobs:
         env:
           SOURCE: ${{ inputs.source_commit }}
           MANIFEST: ${{ inputs.manifest_sha256 }}
-        run: |
-          test "$(cat VERSION)" = '0.1.0'
-          python scripts/assemble.py --input "$RUNNER_TEMP/candidates" --output "$RUNNER_TEMP/release" --commit "$SOURCE" --version v0.1.0 --expected-manifest-sha256 "$MANIFEST"
-      - name: Publish exactly the approved release
+        run: python scripts/assemble.py --input "$RUNNER_TEMP/candidates" --output "$RUNNER_TEMP/release" --commit "$SOURCE" --version "$TAG" --expected-manifest-sha256 "$MANIFEST"
+      - name: Publish release
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE: ${{ inputs.source_commit }}
-        run: |
-          gh release create v0.1.0 "$RUNNER_TEMP/release/"* --target "$SOURCE" --title 'Mafsil v0.1.0' --notes-file docs/releases/v0.1.0.md
+        run: gh release create "$TAG" "$RUNNER_TEMP/release/"* --target "$SOURCE" --title "Mafsil $TAG" --notes-file "docs/releases/$TAG.md"
       - name: Verify published asset bytes
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir "$RUNNER_TEMP/published"
-          gh release download v0.1.0 --dir "$RUNNER_TEMP/published"
+          gh release download "$TAG" --dir "$RUNNER_TEMP/published"
           cd "$RUNNER_TEMP/published"
           sha256sum --strict -c SHA256SUMS
           cmp SHA256SUMS "$RUNNER_TEMP/release/SHA256SUMS"
 
   verify-installers:
     name: Published install on ${{ matrix.runner }}
-    needs: publish
+    needs: [verify, publish]
     strategy:
       fail-fast: false
       matrix:
@@ -121,6 +130,8 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: read
+    env:
+      TAG: ${{ needs.verify.outputs.tag }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -129,10 +140,10 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
-      - name: Download approved release assets
+      - name: Download release assets
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release download v0.1.0 --dir "${{ runner.temp }}/published-mafsil"
+        run: gh release download "$TAG" --dir "${{ runner.temp }}/published-mafsil"
       - name: Check published binaries and stdio
         run: python tests/distribution_test.py --bundle "${{ runner.temp }}/published-mafsil"
       - name: Exercise actual HTTPS install, update and uninstall
@@ -140,22 +151,23 @@ jobs:
         run: |
           import os, pathlib, subprocess
           root = pathlib.Path(os.environ['RUNNER_TEMP'])
+          tag = os.environ['TAG']
           windows = os.name == 'nt'
           script = root / 'published-mafsil' / ('install.ps1' if windows else 'install.sh')
           destination = root / 'mafsil-online-fixture'
           assert not destination.exists()
           def install(action):
               if windows:
-                  command = ['pwsh', '-NoProfile', '-File', str(script), '-Action', action, '-Version', 'v0.1.0', '-Destination', str(destination)]
+                  command = ['pwsh', '-NoProfile', '-File', str(script), '-Action', action, '-Version', tag, '-Destination', str(destination)]
               else:
-                  command = ['sh', str(script), '--action', action.lower(), '--version', 'v0.1.0', '--destination', str(destination)]
+                  command = ['sh', str(script), '--action', action.lower(), '--version', tag, '--destination', str(destination)]
               subprocess.run(command, check=True, timeout=180)
           try:
               install('Install')
               install('Status')
               install('Install')
               binary = destination / ('mafsil.exe' if windows else 'mafsil')
-              assert subprocess.check_output([str(binary), 'version']).startswith(b'Mafsil 0.1.0 (')
+              assert subprocess.check_output([str(binary), 'version']).startswith(('Mafsil ' + tag[1:] + ' (').encode())
           finally:
               install('Uninstall')
           assert not destination.exists()

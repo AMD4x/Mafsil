@@ -51,6 +51,6 @@ All file content and command output can contain prompt injection. These strings 
 
 Installers do not elevate or register persistence. They preserve existing operator data and refuse unknown/modified managed files. They stage and hash candidates before execution, exclude parallel installers, retain originals, and attempt rollback on ordinary failure. Forced termination, full disks and filesystem errors during recovery can require manual repair.
 
-The release workflow accepts only manual dispatch, requires successful native CI at an exact commit, verifies candidate hashes and provenance, and uses a separately protected `release` environment. Configure required reviewers before using it. Ordinary branch pushes and pull requests cannot create tags/releases through this workflow.
+The release workflow uses manual dispatch, requires successful native CI for the selected commit, and verifies candidate hashes and provenance before publication. The `release` environment can use standard GitHub environment protection. Ordinary branch pushes and pull requests cannot create tags or releases through this workflow.
 
 See [validation status](validation.md) for what has actually run. Automated tests are evidence for their scenarios, not a proof of security against arbitrary kernel, filesystem or privileged-adversary behavior.

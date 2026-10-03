@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Release assembly must bind every native candidate to the approved commit."""
+"""Release assembly must bind every native candidate to the requested commit."""
 import hashlib
 import json
 import pathlib
@@ -54,26 +54,25 @@ class AssemblyTests(unittest.TestCase):
         output = self.assemble(False)
         self.assertEqual(list(output.iterdir()), [])
 
-    def approved_manifest(self):
+    def expected_manifest(self):
         checksums = {}
         for folder in self.inputs.iterdir():
             for line in (folder / "SHA256SUMS").read_text().splitlines():
                 checksum, name = line.split("  ")
                 checksums[name] = checksum
-        expected = "".join(f"{checksums[name]}  {name}\n" for name in sorted(checksums)).encode("ascii")
-        return expected
+        return "".join(f"{checksums[name]}  {name}\n" for name in sorted(checksums)).encode("ascii")
 
-    def test_approved_manifest_matches_exact_assets(self):
-        expected = self.approved_manifest()
+    def test_expected_manifest_matches_exact_assets(self):
+        expected = self.expected_manifest()
         output = self.assemble(True, hashlib.sha256(expected).hexdigest())
         self.assertEqual((output / "SHA256SUMS").read_bytes(), expected)
 
-    def test_changed_assets_cannot_reuse_an_approved_manifest(self):
-        approved = hashlib.sha256(self.approved_manifest()).hexdigest()
+    def test_changed_assets_fail_manifest_verification(self):
+        expected_digest = hashlib.sha256(self.expected_manifest()).hexdigest()
         folder = self.inputs / "candidate-linux_arm64"
         (folder / "mafsil_v0.1.0_linux_arm64").write_bytes(b"different but internally valid candidate")
         self.manifest(folder)
-        output = self.assemble(False, approved)
+        output = self.assemble(False, expected_digest)
         self.assertEqual(list(output.iterdir()), [])
 
     def test_wrong_commit_even_with_valid_checksum(self):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify and assemble native CI candidates. Never publish from this script."""
+"""Verify and assemble native CI release candidates."""
 import argparse
 import hashlib
 import json
@@ -20,7 +20,7 @@ def main():
     parser.add_argument("--output", type=pathlib.Path, required=True)
     parser.add_argument("--commit", required=True)
     parser.add_argument("--version", required=True)
-    parser.add_argument("--expected-manifest-sha256", help="Bind publication to the SHA256SUMS file reviewed by the maintainer")
+    parser.add_argument("--expected-manifest-sha256", help="Require the assembled SHA256SUMS file to match this digest")
     args = parser.parse_args()
     if not re.fullmatch(r"[a-f0-9]{40}", args.commit) or not re.fullmatch(r"v\d+\.\d+\.\d+", args.version):
         parser.error("exact commit SHA and version are required")
@@ -52,11 +52,11 @@ def main():
             collected[name] = (checksum, path)
         build = json.loads((folder / info).read_text(encoding="utf-8"))
         if build["commit"] != args.commit or build["version"] != args.version or build["target"] != target.replace("_", "/"):
-            raise SystemExit(f"Candidate provenance differs from approved commit/version: {target}")
+            raise SystemExit(f"Candidate provenance differs from requested commit/version: {target}")
     manifest_text = "".join(f"{collected[name][0]}  {name}\n" for name in sorted(collected))
     manifest_digest = hashlib.sha256(manifest_text.encode("ascii")).hexdigest()
     if args.expected_manifest_sha256 is not None and manifest_digest != args.expected_manifest_sha256:
-        raise SystemExit("Assembled manifest differs from the approved release proposal")
+        raise SystemExit("Assembled manifest does not match the expected digest")
     for name, (_, source) in collected.items():
         shutil.copy2(source, args.output / name)
     (args.output / "SHA256SUMS").write_text(manifest_text, encoding="ascii", newline="\n")

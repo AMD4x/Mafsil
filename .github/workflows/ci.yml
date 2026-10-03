@@ -47,6 +47,15 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: '3.12'
+      - name: Read version
+        id: version
+        shell: python
+        run: |
+          import os, pathlib, re
+          version = pathlib.Path("VERSION").read_text(encoding="ascii").strip()
+          assert re.fullmatch(r"\d+\.\d+\.\d+", version), "VERSION must contain MAJOR.MINOR.PATCH"
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"tag=v{version}\n")
       - name: Verify native code, race safety and dependencies
         run: python scripts/verify.py --race --security
       - name: Parse installer
@@ -65,7 +74,7 @@ jobs:
           sh -n install.sh
           sh -n scripts/install.sh
       - name: Build candidate with native resources
-        run: python scripts/package.py --version v0.1.0 --target ${{ matrix.target }} --output "${{ runner.temp }}/mafsil-candidate"
+        run: python scripts/package.py --version "${{ steps.version.outputs.tag }}" --target ${{ matrix.target }} --output "${{ runner.temp }}/mafsil-candidate"
       - name: Exercise CLI, stdio and release payload
         run: python tests/distribution_test.py --bundle "${{ runner.temp }}/mafsil-candidate"
       - name: Exercise installer and rollback in fixtures

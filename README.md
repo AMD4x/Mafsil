@@ -191,6 +191,6 @@ Then follow [workspace setup](#choose-an-existing-workspace), using the build di
 python scripts/verify.py --security
 ```
 
-Use `--race` where a C compiler is available. [CONTRIBUTING.md](CONTRIBUTING.md) explains fixtures, native tests, fuzzing, packaging and dependency notices. [CI](.github/workflows/ci.yml) runs native Windows amd64, Linux amd64 and Linux arm64 checks; the release workflow requires a separate manual approval and successful CI for the exact source commit.
+Use `--race` where a C compiler is available. [CONTRIBUTING.md](CONTRIBUTING.md) explains fixtures, native tests, fuzzing, packaging and dependency notices. [CI](.github/workflows/ci.yml) runs native Windows amd64, Linux amd64 and Linux arm64 checks; releases are published manually from a successful CI run for the selected source commit and verified manifest.
 
 Mafsil's code and original brand assets use the [MIT license](LICENSE). Dependencies retain the licenses reproduced in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).

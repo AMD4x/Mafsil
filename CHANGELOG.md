@@ -20,4 +20,4 @@ First public release.
 - Original light/dark identity, editable vector assets and Windows executable resources.
 - Native Windows amd64, Linux amd64 and Linux arm64 CI with race checks, security scans, packaged binary tests and installer fixtures.
 - Structured bug, setup-help and feature-request forms, with a separate private security reporting channel.
-- Exact-source, exact-artifact release approval with verified downloads and native installer validation.
+- Verified release artifacts with SHA-256 integrity checks, public download verification and native installer validation.

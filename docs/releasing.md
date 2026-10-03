@@ -1,52 +1,45 @@
-# Publication and release runbook
+# Release process
 
-Repository publication and release publication require separate maintainer decisions. A logo approval, local test result, repository creation or successful push does not approve a release.
+Mafsil releases are published from artifacts produced by native CI for a specific source commit. The release workflow verifies the selected CI run and the assembled SHA-256 manifest before publishing anything.
 
-## Local preparation
+## Prepare a release
 
-Finish source, tests, documentation, identity, package scripts and workflows locally. Keep application binaries outside Git. Verify source hygiene, notices, native tests and candidate contents. Review the actual working tree/history and present a local-readiness report before asking to publish the repository.
+1. Update `VERSION`, `CHANGELOG.md` and the matching release notes under `docs/releases/`.
+2. Run the local verification commands documented in [CONTRIBUTING.md](../CONTRIBUTING.md).
+3. Push the release commit and wait for the `CI` workflow to pass on that exact commit.
 
-The initial version is **0.1.0**: the API is useful but deliberately pre-1.0 while platform/client feedback is gathered. The proposed tag is `v0.1.0`. Do not reuse an unrelated project's history or versions.
+CI builds native candidates for Windows amd64, Linux amd64 and Linux arm64. It also runs unit/integration tests, race detection, static and vulnerability checks, package validation, installer fixtures and bounded fuzzing.
 
-## Repository publication
+## Verify release artifacts
 
-Only after explicit repository-publication approval:
+Download the three `candidate-*` artifacts from the successful CI run and assemble them in an empty directory:
 
-1. Publish the reviewed source to the intended Mafsil repository.
-2. Observe the `CI` workflow on that exact commit.
-3. Fix actionable failures locally, push fixes and repeat until all required jobs pass.
-4. Enable private vulnerability reporting and configure required reviewers on the `release` environment.
-5. Keep pre-release README wording accurate; download commands cannot work until assets exist.
+```sh
+python scripts/assemble.py \
+  --input ../ci-candidates \
+  --output ../mafsil-release \
+  --commit <40-character-commit-sha> \
+  --version v<version>
+```
 
-The required native jobs are Windows amd64, Linux amd64 and Linux arm64. They include tests, race detection, static/vulnerability checks, source hygiene, package generation, binary/stdio verification and installer fixtures. The separate fuzz job must pass too. Standard GitHub-hosted runners are used; no larger or paid runner labels are required.
+The assembler verifies target metadata, common files and every candidate checksum before producing the final `SHA256SUMS`. Record the SHA-256 digest of that assembled `SHA256SUMS` file; the release workflow uses it to ensure that the published payload matches the files you verified.
 
-Do not treat a cross-compile or an unexecuted test as a native pass. If a genuine external blocker prevents required validation, report it and stop before creating a misleading release.
+Expected release contents are the three native binaries, platform installers, license/notices, three build-info files, `DEPENDENCIES.json` and `SHA256SUMS`.
 
-## Release proposal and approval
+## Publish
 
-After CI passes, prepare a complete proposal using the reviewed [notes](releases/v0.1.0.md), exact source commit and CI run ID, title, asset names and checksums, final install/update commands and known limitations. Assemble the native candidates with `scripts/assemble.py` and record the SHA-256 of the resulting `SHA256SUMS` file itself. That digest binds approval to every reviewed asset. Obtain explicit release approval. A draft release is still a GitHub-side release action and must not be created merely to request review.
+Run the manual **Release** workflow from `main` with:
 
-Expected v0.1.0 assets:
+- `source_commit`: the exact commit that passed CI.
+- `ci_run_id`: the successful `CI` workflow run for that commit.
+- `manifest_sha256`: the SHA-256 digest of the assembled `SHA256SUMS`.
 
-- `mafsil_v0.1.0_windows_amd64.exe`
-- `mafsil_v0.1.0_linux_amd64`
-- `mafsil_v0.1.0_linux_arm64`
-- `install.ps1`, `install.sh`
-- `LICENSE`, `THIRD_PARTY_NOTICES.md`
-- `BUILD-INFO_windows_amd64.json`
-- `BUILD-INFO_linux_amd64.json`
-- `BUILD-INFO_linux_arm64.json`
-- `DEPENDENCIES.json`
-- `SHA256SUMS`
+The workflow reads the release version from `VERSION`, verifies that the selected CI run succeeded on `main` for the supplied commit, downloads its artifacts, reassembles them, checks the manifest digest and creates the matching GitHub release using `docs/releases/v<version>.md`.
 
-No independent signing certificate/key is configured. Describe SHA-256 integrity accurately; do not call it independent publisher authentication. GitHub also generates source archives for the tag.
+The `release` environment can use normal GitHub environment protection if desired. Ordinary pushes, pull requests and tag pushes do not publish releases.
 
-## Publish the approved release
+## Post-release verification
 
-Dispatch the manual **Approved release** workflow from `main` with four reviewed inputs: `source_commit`, `ci_run_id`, `manifest_sha256`, and `approval` set to `publish-v0.1.0`. Its first job verifies that the selected run is the repository's `CI` workflow, succeeded on `main`, and tested the approved commit. The protected `release` environment requires maintainer review.
+After publication, the workflow downloads the public release assets and checks their hashes. Native Windows amd64, Linux amd64 and Linux arm64 jobs then exercise the published binary plus the real HTTPS install, update and uninstall path in temporary directories.
 
-The workflow downloads artifacts from that exact run, checks every manifest and common file, requires the expected target/version/commit in each build record, and verifies the assembled manifest against the approved digest before copying any release payload. A rerun that changes artifact bytes cannot silently replace reviewed assets. It does not rebuild binaries. `gh release create` creates the approved tag/release only at this stage. Ordinary pushes, pull requests and tag pushes do not trigger this workflow.
-
-After release publication, the workflow downloads all released assets and verifies their bytes. Three standard native runners then exercise the published binary and actual HTTPS installer download/update/uninstall path in temporary fixtures. Require those jobs to succeed, confirm public repository/release accessibility and update README pre-release wording. Real tunnel/account validation is separate and must never use undisclosed credentials or private machines as an implicit test target.
-
-If artifact retention expires (14 days), rerun CI at the approved source commit, reassemble and recheck the assets, and refresh the run ID and manifest digest in the proposal before approval. If an approved proposal's artifact bytes, version, notes, title or asset names materially change, present the revised proposal before publishing it.
+If CI artifacts have expired, rerun CI on the intended source commit and verify the newly generated artifacts before publishing. Any change to source, version, release notes or artifact bytes requires a fresh verification pass.
