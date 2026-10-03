@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"testing"
 
 	"golang.org/x/sys/windows"
@@ -38,7 +39,7 @@ func TestJunctionsAreBlocked(t *testing.T) {
 		t.Fatal("escaped write")
 	}
 }
-func fileDACL(t *testing.T, path string) string {
+func fileSecurity(t *testing.T, path string) string {
 	t.Helper()
 	f, e := os.Open(path)
 	if e != nil {
@@ -54,7 +55,74 @@ func fileDACL(t *testing.T, path string) string {
 	if e != nil {
 		t.Fatal(e)
 	}
-	return sd.String()
+	owner, _, e := sd.Owner()
+	if e != nil {
+		t.Fatal(e)
+	}
+	acl, _, e := sd.DACL()
+	if e != nil {
+		t.Fatal(e)
+	}
+	control, _, e := sd.Control()
+	if e != nil {
+		t.Fatal(e)
+	}
+	// Compare the promised owner, exact ACEs and inheritance protection. Windows
+	// may normalize SE_DACL_AUTO_INHERITED when SetSecurityInfo applies an ACL;
+	// GetSecurityInfo can also return group metadata we did not request.
+	snapshot, e := windows.NewSecurityDescriptor()
+	if e != nil {
+		t.Fatal(e)
+	}
+	if e = snapshot.SetOwner(owner, false); e != nil {
+		t.Fatal(e)
+	}
+	if e = snapshot.SetDACL(acl, true, false); e != nil {
+		t.Fatal(e)
+	}
+	if e = snapshot.SetControl(windows.SE_DACL_PROTECTED, control&windows.SE_DACL_PROTECTED); e != nil {
+		t.Fatal(e)
+	}
+	result := snapshot.String()
+	runtime.KeepAlive(sd)
+	if result == "" {
+		t.Fatal("empty security snapshot")
+	}
+	return result
+}
+func TestProtectedDACLIsPreserved(t *testing.T) {
+	w := testWorkspace(t, true)
+	create(t, w, "protected", "old")
+	p := filepath.Join(w.Path(), "protected")
+	user, e := windows.GetCurrentProcessToken().GetTokenUser()
+	if e != nil {
+		t.Fatal(e)
+	}
+	sd, e := windows.SecurityDescriptorFromString("D:P(A;;FA;;;" + user.User.Sid.String() + ")")
+	if e != nil {
+		t.Fatal(e)
+	}
+	acl, _, e := sd.DACL()
+	if e != nil {
+		t.Fatal(e)
+	}
+	if e = windows.SetNamedSecurityInfo(p, windows.SE_FILE_OBJECT, windows.DACL_SECURITY_INFORMATION|windows.PROTECTED_DACL_SECURITY_INFORMATION, nil, nil, acl, nil); e != nil {
+		t.Fatal(e)
+	}
+	runtime.KeepAlive(sd)
+	before := fileSecurity(t, p)
+	if _, e = w.Edit(context.Background(), []Change{{Operation: "write", Path: "protected", ExpectedSHA256: Hash([]byte("old")), Content: str("new")}}); e != nil {
+		t.Fatal(e)
+	}
+	if after := fileSecurity(t, p); after != before {
+		t.Fatalf("replacement changed protected security: %s => %s", before, after)
+	}
+	if _, e = w.Edit(context.Background(), []Change{{Operation: "move", Path: "protected", ExpectedSHA256: Hash([]byte("new")), Destination: "moved"}}); e != nil {
+		t.Fatal(e)
+	}
+	if after := fileSecurity(t, filepath.Join(w.Path(), "moved")); after != before {
+		t.Fatalf("move changed protected security: %s => %s", before, after)
+	}
 }
 func TestUserOwnedFileKeepsOwner(t *testing.T) {
 	w := testWorkspace(t, true)
@@ -69,30 +137,30 @@ func TestUserOwnedFileKeepsOwner(t *testing.T) {
 	if e = windows.SetNamedSecurityInfo(p, windows.SE_FILE_OBJECT, windows.OWNER_SECURITY_INFORMATION, user.User.Sid, nil, nil, nil); e != nil {
 		t.Fatal(e)
 	}
-	before := fileDACL(t, p)
+	before := fileSecurity(t, p)
 	if _, e = w.Edit(context.Background(), []Change{{Operation: "write", Path: "user-owned", ExpectedSHA256: Hash([]byte("old")), Content: str("new")}}); e != nil {
 		t.Fatal(e)
 	}
-	if after := fileDACL(t, p); after != before {
-		t.Fatal("replacement changed owner or DACL")
+	if after := fileSecurity(t, p); after != before {
+		t.Fatalf("replacement changed owner or DACL: %s => %s", before, after)
 	}
 }
 func TestDACLAndAlternateStreams(t *testing.T) {
 	w := testWorkspace(t, true)
 	create(t, w, "a", "old")
 	p := filepath.Join(w.Path(), "a")
-	before := fileDACL(t, p)
+	before := fileSecurity(t, p)
 	if _, e := w.Edit(context.Background(), []Change{{Operation: "write", Path: "a", ExpectedSHA256: Hash([]byte("old")), Content: str("new")}}); e != nil {
 		t.Fatal(e)
 	}
-	if got := fileDACL(t, p); got != before {
+	if got := fileSecurity(t, p); got != before {
 		t.Fatalf("DACL changed: %s => %s", before, got)
 	}
 	if _, e := w.Edit(context.Background(), []Change{{Operation: "move", Path: "a", ExpectedSHA256: Hash([]byte("new")), Destination: "b"}}); e != nil {
 		t.Fatal(e)
 	}
 	p = filepath.Join(w.Path(), "b")
-	if got := fileDACL(t, p); got != before {
+	if got := fileSecurity(t, p); got != before {
 		t.Fatal("move changed DACL")
 	}
 	if e := os.WriteFile(p+":fixture", []byte("keep stream"), 0600); e != nil {
