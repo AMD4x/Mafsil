@@ -8,7 +8,7 @@ For larger changes, open an issue describing the problem and proposed behavior b
 
 ## Development requirements
 
-Use Go 1.27.0 or later and Python 3.12+ for verification and packaging scripts. Windows terminal tests require PowerShell 7 and ConPTY-capable Windows. Linux terminal tests require Bash and `/dev/ptmx`.
+Use Go 1.27.3 or later and Python 3.12+ for verification and packaging scripts. Windows terminal tests require PowerShell 7 and ConPTY-capable Windows. Linux terminal tests require Bash and `/dev/ptmx`.
 
 Keep generated build outputs and test fixtures outside the source tree. Project tests use disposable paths and must not depend on production credentials or persistent system changes.
 
@@ -33,7 +33,7 @@ go test ./internal/workspace -fuzz=FuzzName -fuzztime=30s -parallel=2
 To exercise a packaged candidate locally, use an empty directory outside the source tree:
 
 ```sh
-python scripts/package.py --version v0.1.0 --output ../mafsil-candidate
+python scripts/package.py --version v0.1.1 --output ../mafsil-candidate
 python tests/distribution_test.py --bundle ../mafsil-candidate
 python tests/installer_test.py --bundle ../mafsil-candidate -v
 ```

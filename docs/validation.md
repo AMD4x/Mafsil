@@ -4,11 +4,11 @@ Mafsil is validated on native Windows amd64, Linux amd64 and Linux arm64 runners
 
 ## Current release
 
-Mafsil **v0.1.0** was published on 2026-10-03. Its native CI run completed successfully on all three targets, and the release workflow verified the published assets before running install, update and uninstall checks against the public HTTPS downloads.
+Mafsil **v0.1.1** is the latest stable maintenance release, prepared on 2026-11-02. It incorporates the patched Go toolchain, dependency updates and the improved public installers. Native CI runs on Windows amd64, Linux amd64 and Linux arm64; the release workflow separately verifies the public download checksums and performs real installation/update/uninstallation checks.
 
-- [v0.1.0 release](https://github.com/AMD4x/Mafsil/releases/tag/v0.1.0)
-- [Native CI run](https://github.com/AMD4x/Mafsil/actions/runs/37112896496)
-- [Release verification run](https://github.com/AMD4x/Mafsil/actions/runs/37113683988)
+- [v0.1.1 release](https://github.com/AMD4x/Mafsil/releases/tag/v0.1.1)
+- [CI workflow and history](https://github.com/AMD4x/Mafsil/actions/workflows/ci.yml)
+- [Release verification workflow](https://github.com/AMD4x/Mafsil/actions/workflows/release.yml)
 
 ## What CI validates
 

@@ -2,7 +2,7 @@
 [CmdletBinding()]
 param(
     [ValidateSet('Install', 'Uninstall', 'Status')][string]$Action = 'Install',
-    [string]$Version = 'v0.1.0',
+    [string]$Version = 'v0.1.1',
     [string]$Destination,
     [string]$BundleDirectory,
     [string]$ExpectedSHA256

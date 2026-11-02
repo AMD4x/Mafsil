@@ -19,6 +19,7 @@ import unittest
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 WINDOWS = sys.platform == "win32"
 OPTIONS = None
+CURRENT_VERSION = (ROOT / "VERSION").read_text(encoding="ascii").strip()
 
 def digest(path):
     with path.open("rb") as stream:
@@ -34,8 +35,9 @@ class InstallerTests(unittest.TestCase):
         self.dest = self.root / "installed space [literal]"
         self.script = ROOT / "scripts" / ("install.ps1" if WINDOWS else "install.sh")
 
-    def run_installer(self, action="Install", success=True, script=None, destination=None, version="v0.1.0", bundle=None):
+    def run_installer(self, action="Install", success=True, script=None, destination=None, version=None, bundle=None):
         destination = destination or self.dest
+        version = version or f"v{CURRENT_VERSION}"
         script = script or self.script
         bundle = bundle or self.bundle
         if WINDOWS:
@@ -77,7 +79,7 @@ class InstallerTests(unittest.TestCase):
         # deliberately a version-probe fixture, not a previously shipped build.
         older = self.root / "older-bundle"
         shutil.copytree(self.bundle, older)
-        candidates = list(older.glob("mafsil_v0.1.0_*"))
+        candidates = list(older.glob(f"mafsil_v{CURRENT_VERSION}_*"))
         import platform
         target = ("windows_amd64.exe" if WINDOWS else "linux_" + ("arm64" if platform.machine().lower() in ("aarch64", "arm64") else "amd64"))
         for candidate in candidates:
@@ -101,7 +103,7 @@ class InstallerTests(unittest.TestCase):
         self.assertEqual(config.read_bytes(), before)
         self.assertEqual((scratch / "keep.txt").read_text(), "preserve")
         status = self.run_installer("Status").stdout
-        self.assertIn("v0.1.0", status)
+        self.assertIn(f"v{CURRENT_VERSION}", status)
         self.no_debris()
 
     def test_installed_script_can_uninstall_itself(self):
