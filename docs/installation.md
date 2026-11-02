@@ -47,13 +47,13 @@ There is no background update service, automatic restart, persistent PATH change
 
 ## Install a specific version
 
-Use a published `vMAJOR.MINOR.PATCH` tag. The example below selects the existing `v0.1.0` release; replace that tag deliberately when selecting another published version.
+Use a published `vMAJOR.MINOR.PATCH` tag. The example below selects the current `v0.1.1` release; replace that tag deliberately when selecting another published version.
 
 **Windows**
 
 ```powershell
 Invoke-WebRequest https://raw.githubusercontent.com/AMD4x/Mafsil/main/install.ps1 -OutFile .\mafsil-install.ps1 -ErrorAction Stop
-pwsh -NoProfile -File .\mafsil-install.ps1 -Version v0.1.0
+pwsh -NoProfile -File .\mafsil-install.ps1 -Version v0.1.1
 ```
 
 For a custom directory, pass `-Destination` to that command, for example `-Destination (Join-Path $HOME 'Apps\Mafsil')`. Updates must use that same destination.
@@ -62,7 +62,7 @@ For a custom directory, pass `-Destination` to that command, for example `-Desti
 
 ```bash
 curl --proto '=https' -fsSLo mafsil-install.sh https://raw.githubusercontent.com/AMD4x/Mafsil/main/install.sh
-sh mafsil-install.sh --version v0.1.0
+sh mafsil-install.sh --version v0.1.1
 ```
 
 For a custom directory, add `--destination "$HOME/Apps/Mafsil"`. Use the same destination when updating. These are application installation locations, not workspace examples.
@@ -112,11 +112,11 @@ Power loss or forced termination can leave `.mafsil-install-*` staging/backups a
 Obtain the raw binary, `SHA256SUMS`, `LICENSE`, `THIRD_PARTY_NOTICES.md` and the platform's **versioned release installer** from one release. Run that installer with its explicit version and a local bundle directory:
 
 ```powershell
-pwsh -NoProfile -File .\bundle\install.ps1 -Version v0.1.0 -BundleDirectory .\bundle
+pwsh -NoProfile -File .\bundle\install.ps1 -Version v0.1.1 -BundleDirectory .\bundle
 ```
 
 ```sh
-sh ./bundle/install.sh --version v0.1.0 --bundle ./bundle
+sh ./bundle/install.sh --version v0.1.1 --bundle ./bundle
 ```
 
 The root bootstraps select/download releases and require network access; offline mode belongs to the release's installer. See [validation status](validation.md) for native tests, injected-failure fixtures and real HTTPS checks.

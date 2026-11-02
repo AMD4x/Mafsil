@@ -12,6 +12,9 @@ import subprocess
 import tempfile
 import threading
 
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+CURRENT_VERSION = (ROOT / "VERSION").read_text(encoding="ascii").strip()
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--bundle", type=pathlib.Path, required=True)
@@ -38,12 +41,12 @@ def main():
             assert struct.unpack_from("<H", data, 18)[0] == (183 if "arm64" in name else 62)
     system = "windows" if os.name == "nt" else "linux"
     arch = "arm64" if platform.machine().lower() in ("arm64", "aarch64") else "amd64"
-    binary = bundle / f"mafsil_v0.1.0_{system}_{arch}{'.exe' if os.name == 'nt' else ''}"
+    binary = bundle / f"mafsil_v{CURRENT_VERSION}_{system}_{arch}{'.exe' if os.name == 'nt' else ''}"
     if os.name != "nt":
         # Raw release downloads do not carry executable filesystem mode bits.
         binary.chmod(binary.stat().st_mode | 0o111)
     flags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
-    assert subprocess.check_output([str(binary), "version"], text=True, encoding="utf-8", creationflags=flags).startswith("Mafsil 0.1.0 (")
+    assert subprocess.check_output([str(binary), "version"], text=True, encoding="utf-8", creationflags=flags).startswith(f"Mafsil {CURRENT_VERSION} (")
     with tempfile.TemporaryDirectory(prefix="mafsil-distribution-test-") as root:
         root = pathlib.Path(root)
         work = root / "workspace"; work.mkdir()

@@ -167,7 +167,7 @@ For vulnerabilities, use [private security reporting](https://github.com/AMD4x/M
 
 ### Build from source
 
-Go **1.27.0 or later** is needed to build, not to use a release binary. Windows shell execution uses PowerShell 7; Linux shell execution uses Bash. File tools do not require a shell.
+Go **1.27.3 or later** is needed to build, not to use a release binary. Windows shell execution uses PowerShell 7; Linux shell execution uses Bash. File tools do not require a shell.
 
 Windows, from the source directory:
 

@@ -2,7 +2,7 @@
 # Linux terminal-first installer. No sudo, shell profiles, service or PATH edits.
 set -eu
 action=install
-version=v0.1.0
+version=v0.1.1
 destination=${HOME:?HOME is required}/.local/share/mafsil
 bundle=
 expected=
@@ -16,7 +16,7 @@ while [ "$#" -gt 0 ]; do
                 --action) action=$value;; --version) version=$value;;
                 --destination) destination=$value;; --bundle) bundle=$value;; --sha256) expected=$value;;
             esac;;
-        --help) printf '%s\n' 'install.sh [--action install|uninstall|status] [--version v0.1.0] [--destination DIR] [--bundle DIR] [--sha256 DIGEST]'; exit 0;;
+        --help) printf '%s\n' 'install.sh [--action install|uninstall|status] [--version v0.1.1] [--destination DIR] [--bundle DIR] [--sha256 DIGEST]'; exit 0;;
         *) fail "Unknown argument: $1";;
     esac
 done
