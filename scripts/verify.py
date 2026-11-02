@@ -29,7 +29,7 @@ def main():
     if args.race:
         run("go", "test", "-race", "-shuffle=on", "-timeout=180s", "./...")
     if args.security:
-        run("go", "run", "honnef.co/go/tools/cmd/staticcheck@v0.8.1", "./...")
+        run("go", "run", "honnef.co/go/tools/cmd/staticcheck@v0.8.2", "./...")
         run("go", "run", "golang.org/x/vuln/cmd/govulncheck@v1.8.0", "./...")
 
 if __name__ == "__main__":

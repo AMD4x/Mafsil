@@ -1,6 +1,6 @@
 module github.com/AMD4x/Mafsil
 
-go 1.27.0
+go 1.27.3
 
 require (
 	github.com/modelcontextprotocol/go-sdk v1.8.0
